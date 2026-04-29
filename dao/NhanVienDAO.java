@@ -91,4 +91,33 @@ public class NhanVienDAO {
         }
         return n > 0;
     }
+    
+    public ArrayList<NhanVien> timNhanVien(String tuKhoa) {
+        ArrayList<NhanVien> ds = new ArrayList<>();
+        try {
+            Connection con = Database.getInstance().getConnection();
+            // Sử dụng LIKE để tìm kiếm gần đúng (chứa từ khóa là tìm được)
+            String sql = "SELECT * FROM NhanVien WHERE MaNV LIKE ? OR TenNV LIKE ? OR HoNV LIKE ?";
+            PreparedStatement pst = con.prepareStatement(sql);
+            
+            String pattern = "%" + tuKhoa + "%"; // Thêm dấu % ở 2 đầu cho lệnh LIKE
+            pst.setString(1, pattern);
+            pst.setString(2, pattern);
+            pst.setString(3, pattern);
+            
+            ResultSet rs = pst.executeQuery();
+            while (rs.next()) {
+                String ma = rs.getString("MaNV");
+                String ho = rs.getString("HoNV");
+                String ten = rs.getString("TenNV");
+                int tuoi = rs.getInt("Tuoi");
+                String phong = rs.getString("PhongBan");
+                double luong = rs.getDouble("TienLuong");
+                ds.add(new NhanVien(ma, ho, ten, tuoi, phong, luong));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return ds;
+    }
 }

@@ -9,28 +9,32 @@ import java.util.ArrayList;
 public class HoaDonDAO {
 
     // Hàm thực hiện lưu Hóa Đơn và các Vé Phim cùng lúc
-    public boolean thanhToanHoaDon(String maHD, String maSuat, ArrayList<String> danhSachGhe, double giaVe) {
+	public boolean thanhToanHoaDon(String maHD, String maSuat, ArrayList<String> danhSachGhe, double giaVe, String maKH) {
         Connection con = Database.getInstance().getConnection();
         
         try {
-            // 1. Tắt tự động lưu để bắt đầu Transaction
-            con.setAutoCommit(false); 
+            con.setAutoCommit(false); // Bắt đầu Transaction
 
-            // 2. Thêm dữ liệu vào bảng HoaDon
-            // (GETDATE() là hàm SQL Server tự lấy ngày giờ hiện tại hệ thống)
-            String sqlHD = "INSERT INTO HoaDon (MaHD, MaNV, NgayLap, TongTien) VALUES (?, ?, GETDATE(), ?)";
+            // 1. LƯU HÓA ĐƠN
+            String sqlHD = "INSERT INTO HoaDon (MaHD, MaNV, NgayLap, TongTien, MaKH) VALUES (?, ?, GETDATE(), ?, ?)";
             PreparedStatement pstHD = con.prepareStatement(sqlHD);
             pstHD.setString(1, maHD);
-            pstHD.setString(2, "admin"); // Tạm fix cứng người lập là admin (hoặc truyền biến vào)
+            pstHD.setString(2, "admin"); 
             
             double tongTien = danhSachGhe.size() * giaVe;
             pstHD.setDouble(3, tongTien);
+            
+            // Nếu không có mã KH thì set là NULL trong SQL
+            if (maKH == null || maKH.isEmpty()) {
+                pstHD.setNull(4, java.sql.Types.VARCHAR);
+            } else {
+                pstHD.setString(4, maKH);
+            }
             pstHD.executeUpdate();
 
-            // 3. Thêm dữ liệu vào bảng VePhim (Dùng vòng lặp cho từng ghế)
+            // 2. LƯU VÉ PHIM
             String sqlVe = "INSERT INTO VePhim (MaHD, MaSuat, MaGhe, GiaVe) VALUES (?, ?, ?, ?)";
             PreparedStatement pstVe = con.prepareStatement(sqlVe);
-            
             for (String ghe : danhSachGhe) {
                 pstVe.setString(1, maHD);
                 pstVe.setString(2, maSuat);
@@ -39,26 +43,27 @@ public class HoaDonDAO {
                 pstVe.executeUpdate();
             }
 
-            // 4. Nếu code chạy trót lọt đến đây -> Xác nhận lưu toàn bộ xuống SQL
-            con.commit(); 
+            // 3. TÍCH ĐIỂM TỰ ĐỘNG (Nếu có Mã Khách Hàng)
+            if (maKH != null && !maKH.isEmpty()) {
+                // Công thức: 10.000đ = 1 điểm
+                int diemCong = (int) (tongTien / 10000); 
+                
+                String sqlDiem = "UPDATE KhachHang SET DiemTichLuy = DiemTichLuy + ? WHERE MaKH = ?";
+                PreparedStatement pstDiem = con.prepareStatement(sqlDiem);
+                pstDiem.setInt(1, diemCong);
+                pstDiem.setString(2, maKH);
+                pstDiem.executeUpdate();
+            }
+
+            con.commit(); // Thành công tất cả thì chốt lưu
             return true;
 
         } catch (Exception e) {
-            // Nếu có bất kỳ lỗi nào xảy ra -> Hoàn tác toàn bộ, không lưu gì cả
-            try {
-                con.rollback(); 
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
+            try { con.rollback(); } catch (Exception ex) {} // Lỗi thì hoàn tác
             e.printStackTrace();
             return false;
         } finally {
-            // Bật lại tự động lưu cho các tính năng khác của phần mềm
-            try {
-                con.setAutoCommit(true); 
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
+            try { con.setAutoCommit(true); } catch (Exception ex) {}
         }
     }
  // Hàm lấy danh sách các ghế đã bán theo Mã Suất Chiếu

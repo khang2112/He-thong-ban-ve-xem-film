@@ -14,6 +14,7 @@ public class UI_TrangChu extends JFrame implements ActionListener {
     private Color textWhite = new Color(220, 220, 220);
 
     private JButton btnTrangChu, btnPhim, btnSuatChieu, btnNhanVien, btnHoaDon, btnBanVe, btnThongKe, btnDangXuat;
+    private JButton btnKhachHang;
     
     // --- KHAI BÁO CARDLAYOUT ---
     private JPanel pnlCards; 
@@ -46,21 +47,23 @@ public class UI_TrangChu extends JFrame implements ActionListener {
         btnPhim = createMenuButton("Phim");
         btnSuatChieu = createMenuButton("Suất chiếu");
         btnNhanVien = createMenuButton("Nhân viên");
+        btnKhachHang = createMenuButton("Khách hàng");
         btnHoaDon = createMenuButton("Hoá đơn");
         btnBanVe = createMenuButton("Bán vé");
         btnThongKe = createMenuButton("Thống kê");
         btnDangXuat = createMenuButton("Đăng xuất");
-        btnDangXuat.setForeground(Color.RED); 
-
+        btnDangXuat.setForeground(new Color(231, 76, 60)); // Đỏ nổi bật cho nút đăng xuất
+        
         pnlSidebar.add(btnTrangChu);
         pnlSidebar.add(btnPhim);
         pnlSidebar.add(btnSuatChieu);
         pnlSidebar.add(btnNhanVien);
+        pnlSidebar.add(btnKhachHang); // <-- Đã đưa Khách hàng lên nhóm trên
         pnlSidebar.add(btnHoaDon);
         pnlSidebar.add(btnBanVe);
         pnlSidebar.add(btnThongKe);
         pnlSidebar.add(Box.createVerticalGlue()); 
-        pnlSidebar.add(btnDangXuat);
+        pnlSidebar.add(btnDangXuat); // <-- Đăng xuất nằm gọn gàng ở cuối
 
         add(pnlSidebar, BorderLayout.WEST);
 
@@ -68,20 +71,18 @@ public class UI_TrangChu extends JFrame implements ActionListener {
         cardLayout = new CardLayout();
         pnlCards = new JPanel(cardLayout);
 
-        // 3.1. Nạp Trang Chủ của bạn vào đây
         JPanel pnlHome = createTrangChuPanel();
-        
-        // 3.2. Tạo một Trang Phim trống để test tính năng chuyển trang
         PNL_Phim pnlPhim = new PNL_Phim();
         
-        // Thêm các trang vào CardLayout (đặt tên để gọi)
         pnlCards.add(pnlHome, "TrangChu");
         pnlCards.add(pnlPhim, "Phim");
         pnlCards.add(new PNL_SuatChieu(), "SuatChieu");
         pnlCards.add(new PNL_NhanVien(), "NhanVien");
-        pnlCards.add(new PNL_BanVe(), "BanVe");
+        pnlCards.add(new PNL_KhachHang(), "KhachHang");
         pnlCards.add(new PNL_HoaDon(), "HoaDon");
+        pnlCards.add(new PNL_BanVe(), "BanVe");
         pnlCards.add(new PNL_ThongKe(), "ThongKe");
+        
         add(pnlCards, BorderLayout.CENTER);
 
         // --- 4. FOOTER ---
@@ -92,7 +93,7 @@ public class UI_TrangChu extends JFrame implements ActionListener {
     }
 
     // ==========================================================
-    // HÀM TẠO NỘI DUNG TRANG CHỦ (BÊ NGUYÊN CODE CỦA BẠN VÀO ĐÂY)
+    // HÀM TẠO NỘI DUNG TRANG CHỦ
     // ==========================================================
     private JPanel createTrangChuPanel() {
         JPanel pnlContent = new JPanel(new BorderLayout(10, 10));
@@ -228,43 +229,46 @@ public class UI_TrangChu extends JFrame implements ActionListener {
         Object source = e.getSource();
 
         if (source == btnTrangChu) {
-            // Lật sang trang chủ
             cardLayout.show(pnlCards, "TrangChu");
         } else if (source == btnPhim) {
-            // Lật sang trang quản lý phim
             cardLayout.show(pnlCards, "Phim");
+        } else if (source == btnSuatChieu) {
+            cardLayout.show(pnlCards, "SuatChieu");
+        } else if (source == btnNhanVien) {
+            cardLayout.show(pnlCards, "NhanVien");
+        } else if (source == btnKhachHang) {
+            Component[] comps = pnlCards.getComponents();
+            for (Component c : comps) {
+                if (c instanceof PNL_KhachHang) {
+                    ((PNL_KhachHang) c).loadDataToTable(); // Cập nhật bảng
+                }
+            }
+            cardLayout.show(pnlCards, "KhachHang");
+        } else if (source == btnHoaDon) {
+            Component[] comps = pnlCards.getComponents();
+            for (Component c : comps) {
+                if (c instanceof PNL_HoaDon) {
+                    ((PNL_HoaDon) c).loadDataHoaDon(); // Cập nhật hóa đơn
+                }
+            }
+            cardLayout.show(pnlCards, "HoaDon");
         } else if (source == btnBanVe) {
             cardLayout.show(pnlCards, "BanVe");
+        } else if (source == btnThongKe) {
+            Component[] comps = pnlCards.getComponents();
+            for (Component c : comps) {
+                if (c instanceof PNL_ThongKe) {
+                    ((PNL_ThongKe) c).loadData(); // Cập nhật thống kê
+                }
+            }
+            cardLayout.show(pnlCards, "ThongKe");
         } else if (source == btnDangXuat) {
             int confirm = JOptionPane.showConfirmDialog(this, "Bạn muốn đăng xuất?", "Xác nhận", JOptionPane.YES_NO_OPTION);
             if (confirm == JOptionPane.YES_OPTION) {
                 new UI_DangNhap().setVisible(true);
                 this.dispose();
             }
-        } else if (source == btnSuatChieu) {
-            cardLayout.show(pnlCards, "SuatChieu");
-        }else if (source == btnNhanVien) {
-            cardLayout.show(pnlCards, "NhanVien");
-        }else if (source == btnBanVe) {
-            cardLayout.show(pnlCards, "BanVe");
-        }else if (source == btnThongKe) {
-            Component[] comps = pnlCards.getComponents();
-            for (Component c : comps) {
-                if (c instanceof PNL_ThongKe) {
-                    ((PNL_ThongKe) c).loadData(); // Cập nhật lại biểu đồ
-                }
-            }
-            cardLayout.show(pnlCards, "ThongKe");
-        }else if (source == btnHoaDon) {
-            // Mỗi lần bấm qua tab Hóa Đơn, ta sẽ ép nó quét lại CSDL để cập nhật hóa đơn vừa mới mua bên tab Bán Vé
-            Component[] comps = pnlCards.getComponents();
-            for (Component c : comps) {
-                if (c instanceof PNL_HoaDon) {
-                    ((PNL_HoaDon) c).loadDataHoaDon(); // Gọi hàm load lại dữ liệu
-                }
-            }
-            cardLayout.show(pnlCards, "HoaDon");
-        }else {
+        } else {
             JButton clickedBtn = (JButton) source;
             JOptionPane.showMessageDialog(this, "Chức năng '" + clickedBtn.getText() + "' đang phát triển!");
         }
