@@ -6,140 +6,220 @@ import entity.Phim;
 import entity.SuatChieu;
 import java.awt.*;
 import java.awt.event.*;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.table.DefaultTableModel;
 
+import com.toedter.calendar.JDateChooser;
+import com.toedter.calendar.JSpinnerDateEditor;
+
 public class PNL_SuatChieu extends JPanel implements ActionListener, MouseListener {
-    private JTextField txtMaSuat, txtPhong, txtNgay, txtGio;
-    private JComboBox<String> cboPhim; // Combo box chọn phim
-    private JButton btnThem, btnXoaRong;
-    private DefaultTableModel model;
-    private JTable table;
-    
-    private SuatChieuDAO suatChieuDAO;
-    private PhimDAO phimDAO;
+	private JTextField txtMaSuat;
+	private JDateChooser txtNgay;
+	private JSpinner spnGio;
+	private JComboBox<String> cboPhim, cboPhong; // Combo box chọn phim, phòng
+	private JButton btnThem, btnXoaRong;
+	private DefaultTableModel model;
+	private JTable table;
 
-    public PNL_SuatChieu() {
-        suatChieuDAO = new SuatChieuDAO();
-        phimDAO = new PhimDAO();
-        
-        setLayout(new BorderLayout(10, 10));
-        setBackground(new Color(30, 30, 30));
-        setBorder(new EmptyBorder(10, 10, 10, 10));
+	private SuatChieuDAO suatChieuDAO;
+	private PhimDAO phimDAO;
 
-        // --- FORM NHẬP LIỆU ---
-        JPanel pnlTop = new JPanel(new BorderLayout(0, 10));
-        pnlTop.setOpaque(false);
+	public PNL_SuatChieu() {
+		suatChieuDAO = new SuatChieuDAO();
+		phimDAO = new PhimDAO();
 
-        JPanel pnlInput = new JPanel(new GridLayout(3, 4, 15, 15));
-        pnlInput.setOpaque(false);
-        TitledBorder border = BorderFactory.createTitledBorder(
-                BorderFactory.createLineBorder(Color.GRAY), "THÔNG TIN SUẤT CHIẾU");
-        border.setTitleColor(Color.ORANGE);
-        pnlInput.setBorder(border);
+		setLayout(new BorderLayout(10, 10));
+		setBackground(new Color(30, 30, 30));
+		setBorder(new EmptyBorder(10, 10, 10, 10));
 
-        pnlInput.add(createLabel("Mã Suất:"));
-        txtMaSuat = new JTextField();
-        pnlInput.add(txtMaSuat);
+		// --- FORM NHẬP LIỆU ---
+		JPanel pnlTop = new JPanel(new BorderLayout(0, 10));
+		pnlTop.setOpaque(false);
 
-        pnlInput.add(createLabel("Chọn Phim:"));
-        cboPhim = new JComboBox<>();
-        loadPhimToComboBox(); // Nạp dữ liệu phim vào ComboBox
-        pnlInput.add(cboPhim);
+		JPanel pnlInput = new JPanel(new GridLayout(3, 4, 15, 15));
+		pnlInput.setOpaque(false);
+		TitledBorder border = BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.GRAY),
+				"THÔNG TIN SUẤT CHIẾU");
+		border.setTitleColor(Color.ORANGE);
+		pnlInput.setBorder(border);
 
-        pnlInput.add(createLabel("Phòng Chiếu:"));
-        txtPhong = new JTextField();
-        pnlInput.add(txtPhong);
+		pnlInput.add(createLabel("Mã Suất:"));
+		txtMaSuat = new JTextField();
+		pnlInput.add(txtMaSuat);
 
-        pnlInput.add(createLabel("Ngày (YYYY-MM-DD):"));
-        txtNgay = new JTextField();
-        pnlInput.add(txtNgay);
+		pnlInput.add(createLabel("Chọn Phim:"));
+		cboPhim = new JComboBox<>();
+		loadPhimToComboBox(); // Nạp dữ liệu phim vào ComboBox
+		pnlInput.add(cboPhim);
 
-        pnlInput.add(createLabel("Giờ (HH:MM):"));
-        txtGio = new JTextField();
-        pnlInput.add(txtGio);
+		pnlInput.add(createLabel("Phòng Chiếu:"));
+		String[] danhSachPhong = {"Phòng 1 (2D)", "Phòng 2 (3D)", "Phòng 3 (2D)", "Phòng 4 (3D)", "Phòng 5 (VIP)"};
+		cboPhong = new JComboBox<>(danhSachPhong);
+		pnlInput.add(cboPhong);
 
-        pnlTop.add(pnlInput, BorderLayout.CENTER);
+		pnlInput.add(createLabel("Ngày (YYYY-MM-DD):"));
+		txtNgay = new JDateChooser();
+		txtNgay.setDateFormatString("yyyy-MM-dd");
+		pnlInput.add(txtNgay);
 
-        // --- NÚT BẤM ---
-        JPanel pnlBtns = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        pnlBtns.setOpaque(false);
-        btnThem = new JButton("Thêm Suất");
-        btnXoaRong = new JButton("Xóa Rỗng");
-        pnlBtns.add(btnThem);
-        pnlBtns.add(btnXoaRong);
-        pnlTop.add(pnlBtns, BorderLayout.SOUTH);
-        add(pnlTop, BorderLayout.NORTH);
+		pnlInput.add(createLabel("Giờ (HH:MM):"));
+		SpinnerDateModel timeModel = new SpinnerDateModel();
+		spnGio = new JSpinner(timeModel);
+		JSpinner.DateEditor timeEditor = new JSpinner.DateEditor(spnGio, "HH:mm");
+		spnGio.setEditor(timeEditor);
+		spnGio.setValue(java.sql.Time.valueOf("00:00:00"));
+		pnlInput.add(spnGio);
 
-        // --- BẢNG DỮ LIỆU ---
-        String[] cols = {"Mã Suất", "Mã Phim", "Phòng", "Ngày", "Giờ"};
-        model = new DefaultTableModel(cols, 0);
-        table = new JTable(model);
-        add(new JScrollPane(table), BorderLayout.CENTER);
+		pnlTop.add(pnlInput, BorderLayout.CENTER);
 
-        btnThem.addActionListener(this);
-        btnXoaRong.addActionListener(this);
-        
-        loadDataToTable();
-    }
+		// --- NÚT BẤM ---
+		JPanel pnlBtns = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+		pnlBtns.setOpaque(false);
+		btnThem = new JButton("Thêm Suất");
+		btnXoaRong = new JButton("Xóa Rỗng");
+		pnlBtns.add(btnThem);
+		pnlBtns.add(btnXoaRong);
+		pnlTop.add(pnlBtns, BorderLayout.SOUTH);
+		add(pnlTop, BorderLayout.NORTH);
 
-    private JLabel createLabel(String text) {
-        JLabel lbl = new JLabel(text, SwingConstants.RIGHT);
-        lbl.setForeground(Color.WHITE);
-        return lbl;
-    }
+		// --- BẢNG DỮ LIỆU ---
+		String[] cols = { "Mã Suất", "Mã Phim", "Phòng", "Ngày", "Giờ" };
+		model = new DefaultTableModel(cols, 0);
+		table = new JTable(model);
+		add(new JScrollPane(table), BorderLayout.CENTER);
 
-    // Hàm load tên phim từ Database ném vào JComboBox
-    private void loadPhimToComboBox() {
-        ArrayList<Phim> dsPhim = phimDAO.docTuBang();
-        for (Phim p : dsPhim) {
-            // Định dạng: "MãPhim - Tên Phim" để dễ nhìn
-            cboPhim.addItem(p.getMaPhim() + " - " + p.getTenPhim());
-        }
-    }
+		btnThem.addActionListener(this);
+		btnXoaRong.addActionListener(this);
 
-    private void loadDataToTable() {
-        model.setRowCount(0);
-        ArrayList<SuatChieu> ds = suatChieuDAO.docTuBang();
-        for (SuatChieu s : ds) {
-            model.addRow(new Object[]{s.getMaSuat(), s.getMaPhim(), s.getPhongChieu(), s.getNgayChieu(), s.getGioChieu()});
-        }
-    }
+		loadDataToTable();
+	}
 
-    @Override
-    public void actionPerformed(ActionEvent e) {
-        if (e.getSource() == btnThem) {
-            try {
-                String maS = txtMaSuat.getText();
-                // Tách lấy Mã Phim từ chuỗi "P001 - Mai"
-                String maP = cboPhim.getSelectedItem().toString().split(" - ")[0]; 
-                String phong = txtPhong.getText();
-                String ngay = txtNgay.getText();
-                String gio = txtGio.getText();
+	private JLabel createLabel(String text) {
+		JLabel lbl = new JLabel(text, SwingConstants.RIGHT);
+		lbl.setForeground(Color.WHITE);
+		return lbl;
+	}
 
-                SuatChieu s = new SuatChieu(maS, maP, phong, ngay, gio);
-                if (suatChieuDAO.themSuatChieu(s)) {
+	// Hàm load tên phim từ Database ném vào JComboBox
+	private void loadPhimToComboBox() {
+		ArrayList<Phim> dsPhim = phimDAO.docTuBang();
+		for (Phim p : dsPhim) {
+			// Định dạng: "MãPhim - Tên Phim" để dễ nhìn
+			cboPhim.addItem(p.getMaPhim() + " - " + p.getTenPhim());
+		}
+	}
+
+	private void loadDataToTable() {
+		model.setRowCount(0);
+		ArrayList<SuatChieu> ds = suatChieuDAO.docTuBang();
+		
+		DateTimeFormatter dtfNgay = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+		DateTimeFormatter dtfGio = DateTimeFormatter.ofPattern("HH:mm");
+		
+		for (SuatChieu s : ds) {
+			String hienThiNgay = (s.getNgayChieu() != null) ? s.getNgayChieu().format(dtfNgay) : "";
+			String hienThiGio = (s.getGioChieu() != null) ? s.getGioChieu().format(dtfGio) : "";
+			
+			model.addRow(new Object[] { 
+			    s.getMaSuat(), 
+			    s.getMaPhim(), 
+			    s.getPhongChieu(), 
+			    hienThiNgay, 
+			    hienThiGio   
+			});
+		}
+	}
+
+	@Override
+	public void actionPerformed(ActionEvent e) {
+		if (e.getSource() == btnThem) {
+			if (validData()) {
+				SuatChieu s = revertSCFromTextField();
+				if (suatChieuDAO.themSuatChieu(s)) {
                     loadDataToTable();
                     JOptionPane.showMessageDialog(this, "Thêm thành công!");
                 } else {
                     JOptionPane.showMessageDialog(this, "Trùng mã hoặc lỗi dữ liệu!");
                 }
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, "Lỗi nhập liệu!");
-            }
-        } else if (e.getSource() == btnXoaRong) {
-            txtMaSuat.setText(""); txtPhong.setText(""); 
-            txtNgay.setText(""); txtGio.setText("");
-        }
-    }
+				
+			}
+		} else if (e.getSource() == btnXoaRong) {
+			txtMaSuat.setText("");
+			cboPhong.setSelectedIndex(0);
+			txtNgay.setDate(null);
+			;
+			spnGio.setValue(java.sql.Time.valueOf("00:00:00"));
+		}
+	}
 
-    // (Bỏ trống các hàm MouseListener cho gọn code nhé)
-    @Override public void mouseClicked(MouseEvent e) {}
-    @Override public void mousePressed(MouseEvent e) {}
-    @Override public void mouseReleased(MouseEvent e) {}
-    @Override public void mouseEntered(MouseEvent e) {}
-    @Override public void mouseExited(MouseEvent e) {}
+	private SuatChieu revertSCFromTextField() {
+		 String maS = txtMaSuat.getText().trim();
+         String maP = cboPhim.getSelectedItem().toString().split(" - ")[0]; 
+         String phong = cboPhong.getSelectedItem().toString();
+         
+         java.util.Date dateNgay = txtNgay.getDate();
+         java.util.Date dateGio = (java.util.Date) spnGio.getValue();
+         LocalDate ngay = dateNgay.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+         LocalTime gio = dateGio.toInstant().atZone(ZoneId.systemDefault()).toLocalTime();
+		return new SuatChieu(maS, maP, phong, ngay, gio);
+	}
+
+	private boolean validData() {
+		String maS = txtMaSuat.getText().trim();
+		String maP = cboPhim.getSelectedItem().toString().split(" - ")[0];
+		String phong = cboPhong.getSelectedItem().toString();
+
+		java.util.Date ngay = txtNgay.getDate();
+		java.util.Date gio = (java.util.Date) spnGio.getValue();
+
+		if (!(maS.length() > 0 && maS.matches("^S[0-9]{3}$"))) {
+			JOptionPane.showMessageDialog(this, "Vui lòng nhập mã suất chiếu đúng định dạng. VD: S001");
+			txtMaSuat.requestFocus();
+			return false;
+		}
+
+		if (ngay == null) {
+			JOptionPane.showMessageDialog(this, "Vui lòng chọn ngày chiếu");
+			txtNgay.requestFocus();
+			return false;
+		}
+
+		LocalDate ngayChon = ngay.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+		LocalTime gioChon = gio.toInstant().atZone(ZoneId.systemDefault()).toLocalTime();
+
+		LocalDate ngayHT = LocalDate.now();
+		LocalTime gioHT = LocalTime.now();
+
+		if (ngayChon.isBefore(ngayHT)) {
+			JOptionPane.showMessageDialog(this, "Ngày chiếu không được ở quá khứ");
+			txtNgay.requestFocus();
+			return false;
+		} else if (ngayChon.equals(ngayHT)) {
+			if (gioChon.isBefore(gioHT)) {
+				JOptionPane.showMessageDialog(this, "Suất chiếu phải diễn ra sau giờ hiện tại");
+				spnGio.requestFocus();
+				return false;
+			}
+		}
+		return true;
+	}
+
+	// (Bỏ trống các hàm MouseListener cho gọn code nhé)
+	@Override
+	public void mouseClicked(MouseEvent e) {}
+	@Override
+	public void mousePressed(MouseEvent e) {}
+	@Override
+	public void mouseReleased(MouseEvent e) {}
+	@Override
+	public void mouseEntered(MouseEvent e) {}
+	@Override
+	public void mouseExited(MouseEvent e) {}
 }
