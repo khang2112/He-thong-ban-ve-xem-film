@@ -6,6 +6,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.ArrayList;
 
 public class SuatChieuDAO {
@@ -23,8 +25,10 @@ public class SuatChieuDAO {
                 String maS = rs.getString("MaSuat");
                 String maP = rs.getString("MaPhim");
                 String phong = rs.getString("PhongChieu");
-                String ngay = rs.getString("NgayChieu");
-                String gio = rs.getString("GioChieu");
+                java.sql.Date sqlNgay = rs.getDate("NgayChieu");
+                LocalDate ngay = (sqlNgay != null) ? sqlNgay.toLocalDate() : null;
+                java.sql.Time sqlGio = rs.getTime("GioChieu");
+                LocalTime gio = (sqlGio != null) ? sqlGio.toLocalTime() : null;
                 dsSuat.add(new SuatChieu(maS, maP, phong, ngay, gio));
             }
         } catch (Exception e) {
@@ -44,8 +48,8 @@ public class SuatChieuDAO {
             stmt.setString(1, s.getMaSuat());
             stmt.setString(2, s.getMaPhim());
             stmt.setString(3, s.getPhongChieu());
-            stmt.setString(4, s.getNgayChieu());
-            stmt.setString(5, s.getGioChieu());
+            stmt.setDate(4, java.sql.Date.valueOf(s.getNgayChieu()));
+            stmt.setTime(5, java.sql.Time.valueOf(s.getGioChieu()));
             n = stmt.executeUpdate();
         } catch (Exception e) {
             e.printStackTrace();
