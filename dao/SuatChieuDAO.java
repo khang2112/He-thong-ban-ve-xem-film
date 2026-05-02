@@ -1,10 +1,12 @@
 package dao;
 
 import connect.Database;
+import entity.KhachHang;
 import entity.SuatChieu;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -54,6 +56,34 @@ public class SuatChieuDAO {
         } catch (Exception e) {
             e.printStackTrace();
         }
+        return n > 0;
+    }
+    
+    // Xóa suất chiếu
+    public boolean xoaSuatChieu(String ma) {
+        Connection con = Database.getInstance().getConnection();
+        int n = 0;
+        try {
+            PreparedStatement stmt = con.prepareStatement("DELETE FROM SuatChieu WHERE MaSuat = ?");
+            stmt.setString(1, ma);
+            n = stmt.executeUpdate();
+        } catch (SQLException e) { e.printStackTrace(); }
+        return n > 0;
+    }
+    
+    // Sửa suất chiếu
+    public boolean suaSuatChieu(SuatChieu s) {
+        Connection con = Database.getInstance().getConnection();
+        int n = 0;
+        try {
+            PreparedStatement stmt = con.prepareStatement("UPDATE SuatChieu SET MaPhim=?, PhongChieu=?, NgayChieu=?, GioChieu=? WHERE MaSuat=?");
+            stmt.setString(1, s.getMaPhim());
+            stmt.setString(2, s.getPhongChieu());
+            stmt.setDate(3, java.sql.Date.valueOf(s.getNgayChieu()));
+            stmt.setTime(4, java.sql.Time.valueOf(s.getGioChieu()));
+            stmt.setString(5, s.getMaSuat());
+            n = stmt.executeUpdate();
+        } catch (SQLException e) { e.printStackTrace(); }
         return n > 0;
     }
 }
