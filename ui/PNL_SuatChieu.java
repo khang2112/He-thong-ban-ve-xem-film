@@ -2,6 +2,7 @@ package ui;
 
 import dao.PhimDAO;
 import dao.SuatChieuDAO;
+import entity.KhachHang;
 import entity.Phim;
 import entity.SuatChieu;
 import java.awt.*;
@@ -24,7 +25,7 @@ public class PNL_SuatChieu extends JPanel implements ActionListener, MouseListen
 	private JDateChooser txtNgay;
 	private JSpinner spnGio;
 	private JComboBox<String> cboPhim, cboPhong; // Combo box chọn phim, phòng
-	private JButton btnThem, btnXoaRong;
+	private JButton btnThem, btnSua, btnXoaRong, btnXoa;
 	private DefaultTableModel model;
 	private JTable table;
 
@@ -60,7 +61,7 @@ public class PNL_SuatChieu extends JPanel implements ActionListener, MouseListen
 		pnlInput.add(cboPhim);
 
 		pnlInput.add(createLabel("Phòng Chiếu:"));
-		String[] danhSachPhong = {"Phòng 1 (2D)", "Phòng 2 (3D)", "Phòng 3 (2D)", "Phòng 4 (3D)", "Phòng 5 (VIP)"};
+		String[] danhSachPhong = { "Phòng 1 (2D)", "Phòng 2 (3D)", "Phòng 3 (2D)", "Phòng 4 (3D)", "Phòng 5 (VIP)" };
 		cboPhong = new JComboBox<>(danhSachPhong);
 		pnlInput.add(cboPhong);
 
@@ -83,9 +84,13 @@ public class PNL_SuatChieu extends JPanel implements ActionListener, MouseListen
 		JPanel pnlBtns = new JPanel(new FlowLayout(FlowLayout.RIGHT));
 		pnlBtns.setOpaque(false);
 		btnThem = new JButton("Thêm Suất");
+		btnSua = new JButton("Sửa");
 		btnXoaRong = new JButton("Xóa Rỗng");
+		btnXoa = new JButton("Xóa");
 		pnlBtns.add(btnThem);
+		pnlBtns.add(btnSua);
 		pnlBtns.add(btnXoaRong);
+		pnlBtns.add(btnXoa);
 		pnlTop.add(pnlBtns, BorderLayout.SOUTH);
 		add(pnlTop, BorderLayout.NORTH);
 
@@ -96,7 +101,10 @@ public class PNL_SuatChieu extends JPanel implements ActionListener, MouseListen
 		add(new JScrollPane(table), BorderLayout.CENTER);
 
 		btnThem.addActionListener(this);
+		btnSua.addActionListener(this);
 		btnXoaRong.addActionListener(this);
+		btnXoa.addActionListener(this);
+		table.addMouseListener(this);
 
 		loadDataToTable();
 	}
@@ -119,21 +127,15 @@ public class PNL_SuatChieu extends JPanel implements ActionListener, MouseListen
 	private void loadDataToTable() {
 		model.setRowCount(0);
 		ArrayList<SuatChieu> ds = suatChieuDAO.docTuBang();
-		
+
 		DateTimeFormatter dtfNgay = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 		DateTimeFormatter dtfGio = DateTimeFormatter.ofPattern("HH:mm");
-		
+
 		for (SuatChieu s : ds) {
 			String hienThiNgay = (s.getNgayChieu() != null) ? s.getNgayChieu().format(dtfNgay) : "";
 			String hienThiGio = (s.getGioChieu() != null) ? s.getGioChieu().format(dtfGio) : "";
-			
-			model.addRow(new Object[] { 
-			    s.getMaSuat(), 
-			    s.getMaPhim(), 
-			    s.getPhongChieu(), 
-			    hienThiNgay, 
-			    hienThiGio   
-			});
+
+			model.addRow(new Object[] { s.getMaSuat(), s.getMaPhim(), s.getPhongChieu(), hienThiNgay, hienThiGio });
 		}
 	}
 
@@ -143,31 +145,66 @@ public class PNL_SuatChieu extends JPanel implements ActionListener, MouseListen
 			if (validData()) {
 				SuatChieu s = revertSCFromTextField();
 				if (suatChieuDAO.themSuatChieu(s)) {
-                    loadDataToTable();
-                    JOptionPane.showMessageDialog(this, "Thêm thành công!");
-                } else {
-                    JOptionPane.showMessageDialog(this, "Trùng mã hoặc lỗi dữ liệu!");
-                }
-				
+					loadDataToTable();
+					JOptionPane.showMessageDialog(this, "Thêm thành công!");
+				} else {
+					JOptionPane.showMessageDialog(this, "Trùng mã hoặc lỗi dữ liệu!");
+				}
 			}
 		} else if (e.getSource() == btnXoaRong) {
 			txtMaSuat.setText("");
+			txtMaSuat.setEditable(true);
 			cboPhong.setSelectedIndex(0);
 			txtNgay.setDate(null);
-			;
 			spnGio.setValue(java.sql.Time.valueOf("00:00:00"));
+
+		} else if (e.getSource() == btnXoa) {
+			int row = table.getSelectedRow();
+			if (row == -1) {
+				JOptionPane.showMessageDialog(this, "Vui lòng chọn suất chiếu cần xóa từ bảng!", "Nhắc nhở",
+						JOptionPane.WARNING_MESSAGE);
+				return;
+			}
+			if (JOptionPane.showConfirmDialog(this, "Bạn có chắc muốn xóa suất chiếu này?", "Xác nhận",
+					JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+				String ma = model.getValueAt(row, 0).toString();
+				if (suatChieuDAO.xoaSuatChieu(ma)) {
+					loadDataToTable();
+					JOptionPane.showMessageDialog(this, "Đã xóa thành công!");
+				} else {
+					JOptionPane.showMessageDialog(this,
+							"Xóa thất bại! Suất chiếu này có thể đang tồn tại trong hóa đơn.", "Lỗi CSDL",
+							JOptionPane.ERROR_MESSAGE);
+				}
+			}
+		} else if (e.getSource() == btnSua) {
+			int row = table.getSelectedRow();
+			if (row == -1) {
+				JOptionPane.showMessageDialog(this, "Vui lòng chọn suất chiếu cần sửa thông tin từ bảng!", "Nhắc nhở",
+						JOptionPane.WARNING_MESSAGE);
+				return;
+			}
+			if (!validData())
+				return;
+
+			SuatChieu s = revertSCFromTextField();
+			if (suatChieuDAO.suaSuatChieu(s)) {
+				loadDataToTable();
+				JOptionPane.showMessageDialog(this, "Cập nhật thành công!", "Thông báo",
+						JOptionPane.INFORMATION_MESSAGE);
+			}
 		}
 	}
 
 	private SuatChieu revertSCFromTextField() {
-		 String maS = txtMaSuat.getText().trim();
-         String maP = cboPhim.getSelectedItem().toString().split(" - ")[0]; 
-         String phong = cboPhong.getSelectedItem().toString();
-         
-         java.util.Date dateNgay = txtNgay.getDate();
-         java.util.Date dateGio = (java.util.Date) spnGio.getValue();
-         LocalDate ngay = dateNgay.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-         LocalTime gio = dateGio.toInstant().atZone(ZoneId.systemDefault()).toLocalTime();
+		String maS = txtMaSuat.getText().trim();
+		String maP = cboPhim.getSelectedItem().toString().split(" - ")[0];
+		String phong = cboPhong.getSelectedItem().toString();
+
+		java.util.Date dateNgay = txtNgay.getDate();
+		java.util.Date dateGio = (java.util.Date) spnGio.getValue();
+		LocalDate ngay = dateNgay.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+		LocalTime gio = dateGio.toInstant().atZone(ZoneId.systemDefault()).toLocalTime();
 		return new SuatChieu(maS, maP, phong, ngay, gio);
 	}
 
@@ -213,13 +250,40 @@ public class PNL_SuatChieu extends JPanel implements ActionListener, MouseListen
 
 	// (Bỏ trống các hàm MouseListener cho gọn code nhé)
 	@Override
-	public void mouseClicked(MouseEvent e) {}
-	@Override
-	public void mousePressed(MouseEvent e) {}
-	@Override
-	public void mouseReleased(MouseEvent e) {}
-	@Override
-	public void mouseEntered(MouseEvent e) {}
-	@Override
-	public void mouseExited(MouseEvent e) {}
+	public void mouseClicked(MouseEvent e) {
+		int row = table.getSelectedRow();
+		if (row != -1) {
+			txtMaSuat.setText(model.getValueAt(row, 0).toString());
+			txtMaSuat.setEditable(false);
+
+			// Xử lý ComboBox Phim (Dò tìm Item bắt đầu bằng Mã Phim trong bảng)
+			String maPhimTable = model.getValueAt(row, 1).toString();
+			for (int i = 0; i < cboPhim.getItemCount(); i++) {
+				String itemPhim = cboPhim.getItemAt(i);
+				if (itemPhim.startsWith(maPhimTable)) {
+					cboPhim.setSelectedIndex(i);
+					break;
+				}
+			}
+
+			cboPhong.setSelectedItem(model.getValueAt(row, 2).toString());
+
+			// Xử lý Ngày (Dùng thẳng LocalDate cực gọn, bỏ luôn try-catch)
+			String ngayStr = model.getValueAt(row, 3).toString();
+			if (!ngayStr.isEmpty()) {
+				txtNgay.setDate(java.sql.Date.valueOf(LocalDate.parse(ngayStr)));
+			}
+
+			// Xử lý Giờ (Dùng thẳng LocalTime, bỏ luôn try-catch)
+			String gioStr = model.getValueAt(row, 4).toString();
+			if (!gioStr.isEmpty()) {
+				spnGio.setValue(java.sql.Time.valueOf(LocalTime.parse(gioStr)));
+			}
+		}
+	}
+
+	@Override public void mousePressed(MouseEvent e) {}
+	@Override public void mouseReleased(MouseEvent e) {}
+	@Overridepublic void mouseEntered(MouseEvent e) {}
+	@Overridepublic void mouseExited(MouseEvent e) {}
 }
