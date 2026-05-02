@@ -284,6 +284,6 @@ public class PNL_SuatChieu extends JPanel implements ActionListener, MouseListen
 
 	@Override public void mousePressed(MouseEvent e) {}
 	@Override public void mouseReleased(MouseEvent e) {}
-	@Overridepublic void mouseEntered(MouseEvent e) {}
-	@Overridepublic void mouseExited(MouseEvent e) {}
+	@Override public void mouseEntered(MouseEvent e) {}
+	@Override public void mouseExited(MouseEvent e) {}
 }
