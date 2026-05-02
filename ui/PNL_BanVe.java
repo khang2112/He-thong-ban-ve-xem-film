@@ -4,6 +4,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Locale;
@@ -12,6 +13,8 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
+
+import entity.SuatChieu;
 
 public class PNL_BanVe extends JPanel implements ActionListener {
     private JComboBox<String> cboSuatChieu;
@@ -31,6 +34,7 @@ public class PNL_BanVe extends JPanel implements ActionListener {
     
     private dao.HoaDonDAO hoaDonDAO = new dao.HoaDonDAO();
     private dao.KhachHangDAO khachHangDAO = new dao.KhachHangDAO(); // <-- THÊM DÒNG NÀY
+    private dao.SuatChieuDAO suatChieuDAO = new dao.SuatChieuDAO();
     
     public PNL_BanVe() {
         setLayout(new BorderLayout(20, 20)); // Tăng khoảng cách các khối
@@ -44,7 +48,7 @@ public class PNL_BanVe extends JPanel implements ActionListener {
         pnlTop.setOpaque(false);
         pnlTop.setBorder(new EmptyBorder(0, 0, 10, 0));
 
-        JPanel pnlTopLeft = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 0));
+        JPanel pnlTopLeft = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
         pnlTopLeft.setOpaque(false);
         
         JLabel lblChonSuat = new JLabel("SUẤT CHIẾU:");
@@ -53,16 +57,20 @@ public class PNL_BanVe extends JPanel implements ActionListener {
         
         cboSuatChieu = new JComboBox<>();
         cboSuatChieu.setFont(new Font("Segoe UI", Font.BOLD, 15));
-        cboSuatChieu.setPreferredSize(new Dimension(350, 40));
+        cboSuatChieu.setPreferredSize(new Dimension(390, 40));
         cboSuatChieu.setBackground(new Color(40, 40, 40));
         cboSuatChieu.setForeground(Color.WHITE);
-        cboSuatChieu.addItem("S001 - Mai (2D) - 19:00 Hôm nay");
-        cboSuatChieu.addItem("S002 - Avatar 2 (3D) - 20:30 Hôm nay");
+        this.addComponentListener(new ComponentAdapter() {
+			@Override
+			public void componentShown(ComponentEvent e) {
+				loadSCMoiNhat();
+			}
+		});
         
         pnlTopLeft.add(lblChonSuat);
         pnlTopLeft.add(cboSuatChieu);
 
-        JPanel pnlTopRight = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 0));
+        JPanel pnlTopRight = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
         pnlTopRight.setOpaque(false);
         
         JLabel lblKhachHang = new JLabel("MÃ THẺ KHÁCH HÀNG:");
@@ -301,6 +309,27 @@ public class PNL_BanVe extends JPanel implements ActionListener {
                 btn.setBackground(new Color(231, 76, 60)); // Đỏ
                 btn.setEnabled(false);
             }
+        }
+    }
+    
+    private void loadSCMoiNhat() {
+    	cboSuatChieu.removeAllItems();
+    	ArrayList<entity.SuatChieu> dsSuat = suatChieuDAO.docTuBang();
+    	
+    	DateTimeFormatter dtfNgay = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+    	DateTimeFormatter dtfGio = DateTimeFormatter.ofPattern("HH:mm");
+    	
+    	for (entity.SuatChieu s : dsSuat) {
+            // Ráp thành 1 chuỗi: "S001 - P001 - Phòng 1 (2D) - 19:00 ngày 15/05/2026"
+            String hienThi = s.getMaSuat() + " - " + s.getMaPhim() + " - " + s.getPhongChieu() + " - " 
+                           + s.getGioChieu().format(dtfGio) + " ngày " + s.getNgayChieu().format(dtfNgay);
+                           
+            cboSuatChieu.addItem(hienThi);
+        }
+        // Nếu có suất chiếu, tự động chọn suất đầu tiên và load sơ đồ ghế
+        if(cboSuatChieu.getItemCount() > 0) {
+            cboSuatChieu.setSelectedIndex(0);
+            loadGheTheoSuat();
         }
     }
 
