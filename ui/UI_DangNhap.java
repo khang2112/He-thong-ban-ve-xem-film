@@ -1,6 +1,8 @@
 package ui;
 
 import dao.TaiKhoanDAO;
+import entity.TaiKhoan;
+
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -30,7 +32,8 @@ public class UI_DangNhap extends JFrame implements ActionListener {
     public UI_DangNhap() {
         taiKhoanDAO = new TaiKhoanDAO();
         setTitle("Hệ Thống Đặt Vé - Đăng Nhập");
-        setSize(450, 300);
+        setSize(480, 300);
+        setResizable(false);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
 
@@ -40,31 +43,31 @@ public class UI_DangNhap extends JFrame implements ActionListener {
 
         // --- TIÊU ĐỀ ---
         JLabel lblTitle = new JLabel("RẠP CHIẾU PHIM XIN CHÀO");
-        lblTitle.setFont(new Font("Arial", Font.BOLD, 20));
+        lblTitle.setFont(new Font("Arial", Font.BOLD, 22));
         lblTitle.setForeground(Color.WHITE);
         lblTitle.setBounds(80, 20, 300, 30);
-        bgPanel.add(lblTitle);
+        bgPanel.add(lblTitle, JLabel.CENTER);
 
         // --- TÀI KHOẢN ---
         JLabel lblUser = new JLabel("Tài khoản:");
         lblUser.setFont(new Font("Arial", Font.BOLD, 14));
         lblUser.setForeground(Color.WHITE);
-        lblUser.setBounds(60, 80, 80, 25);
+        lblUser.setBounds(75, 80, 80, 25);
         bgPanel.add(lblUser);
 
         txtUser = new JTextField();
-        txtUser.setBounds(150, 80, 200, 30);
+        txtUser.setBounds(150, 80, 220, 30);
         bgPanel.add(txtUser);
 
         // --- MẬT KHẨU ---
         JLabel lblPass = new JLabel("Mật khẩu:");
         lblPass.setFont(new Font("Arial", Font.BOLD, 14));
         lblPass.setForeground(Color.WHITE);
-        lblPass.setBounds(60, 130, 80, 25);
+        lblPass.setBounds(75, 130, 80, 25);
         bgPanel.add(lblPass);
 
         txtPass = new JPasswordField();
-        txtPass.setBounds(150, 130, 200, 30);
+        txtPass.setBounds(150, 130, 220, 30);
         bgPanel.add(txtPass);
 
         // --- NÚT ĐĂNG NHẬP ---
@@ -83,13 +86,14 @@ public class UI_DangNhap extends JFrame implements ActionListener {
         btnThoat.setBackground(new Color(231, 76, 60)); // Màu đỏ
         btnThoat.setForeground(Color.WHITE);
         btnThoat.setFocusPainted(false);
-        // Đặt nút thoát nằm bên phải (X = 230)
-        btnThoat.setBounds(230, 180, 120, 35);
+        // Đặt nút thoát nằm bên phải (X = 250)
+        btnThoat.setBounds(250, 180, 120, 35);
         bgPanel.add(btnThoat);
 
         // Thêm sự kiện click cho cả 2 nút
         btnLogin.addActionListener(this);
         btnThoat.addActionListener(this);
+        
     }
 
     @Override
@@ -111,10 +115,12 @@ public class UI_DangNhap extends JFrame implements ActionListener {
             // Xử lý khi bấm nút Đăng nhập
             String user = txtUser.getText();
             String pass = new String(txtPass.getPassword());
-
-            if (taiKhoanDAO.kiemTraDangNhap(user, pass)) {
-                JOptionPane.showMessageDialog(this, "Đăng nhập thành công!");
-                new UI_TrangChu().setVisible(true); 
+            
+            TaiKhoan tk = taiKhoanDAO.kiemTraDangNhap(user, pass);
+            
+            if (tk != null) {
+                JOptionPane.showMessageDialog(this, "Chào mừng " + tk.getHoTen());
+                new UI_TrangChu(tk).setVisible(true); 
                 this.dispose(); 
             } else {
                 JOptionPane.showMessageDialog(this, "Sai tài khoản hoặc mật khẩu!");

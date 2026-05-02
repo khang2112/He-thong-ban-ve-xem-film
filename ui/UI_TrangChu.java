@@ -6,8 +6,12 @@ import java.awt.event.ActionListener;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 
+import dao.TaiKhoanDAO;
+import entity.TaiKhoan;
+
 public class UI_TrangChu extends JFrame implements ActionListener {
-    
+    //Lưu thông tin người đăng nhập
+	private TaiKhoan userLogin;
     // Khai báo các màu sắc chủ đạo
     private Color darkBg = new Color(30, 30, 30);      
     private Color sidebarBg = new Color(20, 20, 20);   
@@ -20,9 +24,12 @@ public class UI_TrangChu extends JFrame implements ActionListener {
     private JPanel pnlCards; 
     private CardLayout cardLayout;
 
-    public UI_TrangChu() {
+    public UI_TrangChu(TaiKhoan tk) {
+    	this.userLogin = tk;
+    	
         setTitle("Hệ Thống Quản Lý Rạp Chiếu Phim");
-        setSize(1000, 700); 
+        setSize(1000, 700);
+        setResizable(false);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
@@ -90,6 +97,8 @@ public class UI_TrangChu extends JFrame implements ActionListener {
         lblFooter.setForeground(Color.GRAY);
         lblFooter.setBorder(new EmptyBorder(5, 0, 5, 0));
         add(lblFooter, BorderLayout.SOUTH);
+        
+        phanQuyen();
     }
 
     // ==========================================================
@@ -208,7 +217,7 @@ public class UI_TrangChu extends JFrame implements ActionListener {
 
         card.add(lblImg, BorderLayout.CENTER);
         card.add(pnlText, BorderLayout.SOUTH);
-
+        
         return card;
     }
 
@@ -222,19 +231,57 @@ public class UI_TrangChu extends JFrame implements ActionListener {
             return null; 
         }
     }
+    
+    private void phanQuyen() {
+    	 if (userLogin == null) return;
 
+    	    String role = userLogin.getVaiTro();
+
+    	    if (role.equals("STAFF")) {
+
+    	        btnNhanVien.setEnabled(false);
+    	        btnPhim.setEnabled(false);
+    	        btnSuatChieu.setEnabled(false);
+
+    	        btnNhanVien.setToolTipText("Bạn không có quyền truy cập");
+    	        btnPhim.setToolTipText("Bạn không có quyền truy cập");
+    	        btnSuatChieu.setToolTipText("Bạn không có quyền truy cập");
+
+    	        setTitle("Hệ thống (Nhân viên: " + userLogin.getHoTen() + ")");
+    	        
+    	    } else if (role.equals("MANAGER")) {
+
+    	        setTitle("Hệ thống (Admin: " + userLogin.getHoTen() + ")");
+    	        
+    	    }
+    }
+    
     // --- XỬ LÝ SỰ KIỆN CHUYỂN TRANG ---
     @Override
     public void actionPerformed(ActionEvent e) {
         Object source = e.getSource();
+        
+        String role = (userLogin != null) ? userLogin.getVaiTro() : "";
 
         if (source == btnTrangChu) {
             cardLayout.show(pnlCards, "TrangChu");
         } else if (source == btnPhim) {
-            cardLayout.show(pnlCards, "Phim");
+        	if (role.equals("STAFF")) {
+                JOptionPane.showMessageDialog(this, "Nhân viên không có quyền quản lý Phim!");
+                return;
+        	}
+        	cardLayout.show(pnlCards, "Phim");
         } else if (source == btnSuatChieu) {
+        	if (role.equals("STAFF")) {
+                JOptionPane.showMessageDialog(this, "Nhân viên không có quyền quản lý Suất chiếu!");
+                return;
+            }
             cardLayout.show(pnlCards, "SuatChieu");
         } else if (source == btnNhanVien) {
+        	if (role.equals("STAFF")) {
+                JOptionPane.showMessageDialog(this, "Chỉ Quản lý mới có quyền truy cập Nhân viên!");
+                return;
+            }
             cardLayout.show(pnlCards, "NhanVien");
         } else if (source == btnKhachHang) {
             Component[] comps = pnlCards.getComponents();
@@ -272,11 +319,5 @@ public class UI_TrangChu extends JFrame implements ActionListener {
             JButton clickedBtn = (JButton) source;
             JOptionPane.showMessageDialog(this, "Chức năng '" + clickedBtn.getText() + "' đang phát triển!");
         }
-    }
-
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            new UI_TrangChu().setVisible(true);
-        });
     }
 }
