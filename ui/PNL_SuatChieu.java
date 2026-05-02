@@ -171,6 +171,7 @@ public class PNL_SuatChieu extends JPanel implements ActionListener, MouseListen
 				if (suatChieuDAO.xoaSuatChieu(ma)) {
 					loadDataToTable();
 					JOptionPane.showMessageDialog(this, "Đã xóa thành công!");
+					btnXoaRong.doClick();
 				} else {
 					JOptionPane.showMessageDialog(this,
 							"Xóa thất bại! Suất chiếu này có thể đang tồn tại trong hóa đơn.", "Lỗi CSDL",
