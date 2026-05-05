@@ -1,8 +1,7 @@
 package ui;
 
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.event.*;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 
@@ -10,73 +9,164 @@ import dao.TaiKhoanDAO;
 import entity.TaiKhoan;
 
 public class UI_TrangChu extends JFrame implements ActionListener {
-    //Lưu thông tin người đăng nhập
-	private TaiKhoan userLogin;
-    // Khai báo các màu sắc chủ đạo
-    private Color darkBg = new Color(30, 30, 30);      
-    private Color sidebarBg = new Color(20, 20, 20);   
-    private Color textWhite = new Color(220, 220, 220);
-
-    private JButton btnTrangChu, btnPhim, btnSuatChieu, btnNhanVien, btnHoaDon, btnBanVe, btnThongKe, btnDangXuat;
-    private JButton btnKhachHang;
+    // Lưu thông tin người đăng nhập
+    private TaiKhoan userLogin;
     
-    // --- KHAI BÁO CARDLAYOUT ---
+    // --- BẢNG MÀU CHUYÊN NGHIỆP ---
+    private Color bgDark = new Color(18, 18, 18);         // Đen nền chính
+    private Color bgSidebar = new Color(25, 25, 25);      // Đen thanh bên
+    private Color colorHover = new Color(45, 45, 45);     // Xám khi đưa chuột vào
+    private Color colorGold = new Color(212, 175, 55);    // Vàng hoàng gia (Accent)
+    private Color textWhite = new Color(240, 240, 240);   // Trắng chữ
+    private Color textGray = new Color(150, 150, 150);    // Xám chữ phụ
+
+    private MenuButton btnTrangChu, btnPhim, btnSuatChieu, btnNhanVien, btnHoaDon, btnBanVe, btnThongKe, btnDangXuat;
+    private MenuButton btnKhachHang;
+    
     private JPanel pnlCards; 
     private CardLayout cardLayout;
 
+    // --- LỚP NÚT BẤM MENU TÙY CHỈNH CHỐNG LỖI WINDOWS UI ---
+    class MenuButton extends JButton {
+        public MenuButton(String text) {
+            super("  " + text); // Thêm khoảng trắng để chữ thụt vào một chút
+            setFont(new Font("Segoe UI", Font.BOLD, 15));
+            setForeground(textWhite);
+            setBackground(bgSidebar);
+            setFocusPainted(false);
+            setContentAreaFilled(false); // Tắt hiệu ứng viền/màu mặc định của Windows
+            setBorderPainted(false);
+            setCursor(new Cursor(Cursor.HAND_CURSOR));
+            setHorizontalAlignment(SwingConstants.LEFT);
+            
+            // Hiệu ứng Hover đổi màu mượt mà
+            addMouseListener(new MouseAdapter() {
+                public void mouseEntered(MouseEvent e) { setBackground(colorHover); repaint(); }
+                public void mouseExited(MouseEvent e) { setBackground(bgSidebar); repaint(); }
+            });
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setColor(getBackground());
+            g2.fillRect(0, 0, getWidth(), getHeight());
+            g2.dispose();
+            super.paintComponent(g);
+        }
+    }
+
     public UI_TrangChu(TaiKhoan tk) {
-    	this.userLogin = tk;
-    	
-        setTitle("Hệ Thống Quản Lý Rạp Chiếu Phim");
-        setSize(1000, 700);
-        setResizable(false);
+        this.userLogin = tk;
+        
+        setTitle("Hệ Thống Quản Lý Rạp Chiếu Phim - POS");
+        setSize(1200, 750); // Mở rộng form cho rộng rãi chuẩn POS
+        setResizable(true);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
 
-        // --- 1. HEADER ---
-        JLabel lblHeader = new JLabel("HỆ THỐNG QUẢN LÝ RẠP CHIẾU PHIM", JLabel.CENTER);
-        lblHeader.setFont(new Font("Arial", Font.BOLD, 24));
-        lblHeader.setForeground(Color.WHITE);
-        lblHeader.setOpaque(true);
-        lblHeader.setBackground(Color.BLACK);
-        lblHeader.setBorder(new EmptyBorder(10, 0, 10, 0));
-        add(lblHeader, BorderLayout.NORTH);
-
-        // --- 2. SIDEBAR ---
+        // ==========================================
+        // 1. SIDEBAR (THANH ĐIỀU HƯỚNG TRÁI)
+        // ==========================================
         JPanel pnlSidebar = new JPanel();
-        pnlSidebar.setLayout(new GridLayout(10, 1, 0, 5)); 
-        pnlSidebar.setBackground(sidebarBg);
-        pnlSidebar.setPreferredSize(new Dimension(180, 0)); 
-        pnlSidebar.setBorder(new EmptyBorder(20, 0, 0, 0));
+        pnlSidebar.setLayout(new BorderLayout()); 
+        pnlSidebar.setBackground(bgSidebar);
+        pnlSidebar.setPreferredSize(new Dimension(220, 0)); 
+        pnlSidebar.setBorder(BorderFactory.createMatteBorder(0, 0, 0, 1, new Color(50, 50, 50))); // Line phân cách
 
-        btnTrangChu = createMenuButton("Trang chủ");
-        btnPhim = createMenuButton("Phim");
-        btnSuatChieu = createMenuButton("Suất chiếu");
-        btnNhanVien = createMenuButton("Nhân viên");
-        btnKhachHang = createMenuButton("Khách hàng");
-        btnHoaDon = createMenuButton("Hoá đơn");
-        btnBanVe = createMenuButton("Bán vé");
-        btnThongKe = createMenuButton("Thống kê");
-        btnDangXuat = createMenuButton("Đăng xuất");
-        btnDangXuat.setForeground(new Color(231, 76, 60)); // Đỏ nổi bật cho nút đăng xuất
+        // --- Logo / Tên hệ thống góc trái ---
+        JPanel pnlLogo = new JPanel(new GridLayout(2, 1));
+        pnlLogo.setBackground(bgSidebar);
+        pnlLogo.setBorder(new EmptyBorder(25, 20, 25, 20));
         
-        pnlSidebar.add(btnTrangChu);
-        pnlSidebar.add(btnPhim);
-        pnlSidebar.add(btnSuatChieu);
-        pnlSidebar.add(btnNhanVien);
-        pnlSidebar.add(btnKhachHang); // <-- Đã đưa Khách hàng lên nhóm trên
-        pnlSidebar.add(btnHoaDon);
-        pnlSidebar.add(btnBanVe);
-        pnlSidebar.add(btnThongKe);
-        pnlSidebar.add(Box.createVerticalGlue()); 
-        pnlSidebar.add(btnDangXuat); // <-- Đăng xuất nằm gọn gàng ở cuối
+        JLabel lblLogoTitle = new JLabel("CINEMA POS", JLabel.LEFT);
+        lblLogoTitle.setFont(new Font("Segoe UI", Font.BOLD, 22));
+        lblLogoTitle.setForeground(colorGold);
+        
+        JLabel lblLogoSub = new JLabel("Management System", JLabel.LEFT);
+        lblLogoSub.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        lblLogoSub.setForeground(textGray);
+        
+        pnlLogo.add(lblLogoTitle);
+        pnlLogo.add(lblLogoSub);
+        pnlSidebar.add(pnlLogo, BorderLayout.NORTH);
+
+        // --- Danh sách nút Menu ---
+        JPanel pnlMenu = new JPanel(new GridLayout(10, 1, 0, 5));
+        pnlMenu.setBackground(bgSidebar);
+        pnlMenu.setBorder(new EmptyBorder(10, 10, 10, 10));
+
+        btnTrangChu = new MenuButton("Trang chủ");
+        btnPhim = new MenuButton("Quản lý Phim");
+        btnSuatChieu = new MenuButton("Suất chiếu");
+        btnBanVe = new MenuButton("Bán vé (POS)");
+        btnHoaDon = new MenuButton("Hóa đơn");
+        btnKhachHang = new MenuButton("Khách hàng");
+        btnNhanVien = new MenuButton("Nhân viên");
+        btnThongKe = new MenuButton("Thống kê");
+        
+        btnDangXuat = new MenuButton("Đăng xuất");
+        btnDangXuat.setForeground(new Color(231, 76, 60)); // Màu đỏ cảnh báo
+        
+        // Đổi màu riêng cho nút Bán Vé cho nổi bật nhất
+        btnBanVe.setForeground(colorGold);
+        
+        pnlMenu.add(btnTrangChu);
+        pnlMenu.add(btnBanVe); // Ưu tiên nghiệp vụ bán vé lên đầu
+        pnlMenu.add(btnPhim);
+        pnlMenu.add(btnSuatChieu);
+        pnlMenu.add(btnKhachHang);
+        pnlMenu.add(btnHoaDon);
+        pnlMenu.add(btnNhanVien);
+        pnlMenu.add(btnThongKe);
+        
+        pnlSidebar.add(pnlMenu, BorderLayout.CENTER);
+
+        JPanel pnlLogout = new JPanel(new BorderLayout());
+        pnlLogout.setBackground(bgSidebar);
+        pnlLogout.setBorder(new EmptyBorder(10, 10, 20, 10));
+        pnlLogout.add(btnDangXuat, BorderLayout.CENTER);
+        pnlSidebar.add(pnlLogout, BorderLayout.SOUTH);
 
         add(pnlSidebar, BorderLayout.WEST);
 
-        // --- 3. VÙNG TRUNG TÂM (CARD LAYOUT) ---
+        // Đăng ký sự kiện
+        btnTrangChu.addActionListener(this);
+        btnPhim.addActionListener(this);
+        btnSuatChieu.addActionListener(this);
+        btnNhanVien.addActionListener(this);
+        btnKhachHang.addActionListener(this);
+        btnHoaDon.addActionListener(this);
+        btnBanVe.addActionListener(this);
+        btnThongKe.addActionListener(this);
+        btnDangXuat.addActionListener(this);
+
+        // ==========================================
+        // 2. VÙNG TRUNG TÂM (NỘI DUNG CHÍNH)
+        // ==========================================
+        JPanel pnlMainArea = new JPanel(new BorderLayout());
+        pnlMainArea.setBackground(bgDark);
+
+        // --- Top Bar (Hiển thị người đăng nhập) ---
+        JPanel pnlTopBar = new JPanel(new BorderLayout());
+        pnlTopBar.setBackground(bgDark);
+        pnlTopBar.setBorder(new EmptyBorder(15, 25, 15, 25));
+        
+        String chucVu = userLogin != null && userLogin.getVaiTro().equals("MANAGER") ? "Quản lý" : "Nhân viên";
+        String tenNV = userLogin != null ? userLogin.getHoTen() : "Khách";
+        
+        JLabel lblGreeting = new JLabel("Xin chào, " + tenNV + " | Vai trò: " + chucVu);
+        lblGreeting.setFont(new Font("Segoe UI", Font.BOLD, 15));
+        lblGreeting.setForeground(textWhite);
+        pnlTopBar.add(lblGreeting, BorderLayout.EAST);
+        
+        pnlMainArea.add(pnlTopBar, BorderLayout.NORTH);
+
+        // --- Card Layout chứa các trang ---
         cardLayout = new CardLayout();
         pnlCards = new JPanel(cardLayout);
+        pnlCards.setBackground(bgDark);
 
         JPanel pnlHome = createTrangChuPanel();
         PNL_Phim pnlPhim = new PNL_Phim();
@@ -90,85 +180,52 @@ public class UI_TrangChu extends JFrame implements ActionListener {
         pnlCards.add(new PNL_BanVe(), "BanVe");
         pnlCards.add(new PNL_ThongKe(), "ThongKe");
         
-        add(pnlCards, BorderLayout.CENTER);
+        pnlMainArea.add(pnlCards, BorderLayout.CENTER);
+        add(pnlMainArea, BorderLayout.CENTER);
 
-        // --- 4. FOOTER ---
-        JLabel lblFooter = new JLabel("Nhóm Quản lý Rạp Chiếu Phim", JLabel.CENTER);
-        lblFooter.setForeground(Color.GRAY);
-        lblFooter.setBorder(new EmptyBorder(5, 0, 5, 0));
-        add(lblFooter, BorderLayout.SOUTH);
-        
         phanQuyen();
     }
 
     // ==========================================================
-    // HÀM TẠO NỘI DUNG TRANG CHỦ
+    // HÀM TẠO NỘI DUNG TRANG CHỦ (DASHBOARD)
     // ==========================================================
     private JPanel createTrangChuPanel() {
-        JPanel pnlContent = new JPanel(new BorderLayout(10, 10));
-        pnlContent.setBackground(darkBg);
-        pnlContent.setBorder(new EmptyBorder(10, 10, 10, 10));
+        JPanel pnlContent = new JPanel(new BorderLayout(20, 20));
+        pnlContent.setBackground(bgDark);
+        pnlContent.setBorder(new EmptyBorder(10, 25, 25, 25));
 
-        // --- Banner Slider ---
-        JLabel lblBanner = new JLabel();
-        lblBanner.setHorizontalAlignment(JLabel.CENTER);
-        lblBanner.setForeground(Color.WHITE);
-        pnlContent.add(lblBanner, BorderLayout.NORTH);
+        // --- 1. Khung Thống Kê Nhanh (Quick Stats) ---
+        JPanel pnlStats = new JPanel(new GridLayout(1, 3, 20, 0));
+        pnlStats.setBackground(bgDark);
+        pnlStats.setPreferredSize(new Dimension(0, 100));
 
-        String[] danhSachBanner = {
-            "images/banner1.jpg",
-            "images/banner2.jpg",
-            "images/banner3.jpg"
-        };
-        
-        ImageIcon[] bannerIcons = new ImageIcon[danhSachBanner.length];
-        for (int i = 0; i < danhSachBanner.length; i++) {
-            bannerIcons[i] = scaleImage(danhSachBanner[i], 800, 280); 
-        }
+        pnlStats.add(createStatCard("Doanh thu hôm nay", "12.500.000 đ", new Color(46, 204, 113)));
+        pnlStats.add(createStatCard("Vé đã bán", "156 Vé", new Color(52, 152, 219)));
+        pnlStats.add(createStatCard("Khách hàng mới", "+24 Người", colorGold));
 
-        if (bannerIcons[0] != null) {
-            lblBanner.setIcon(bannerIcons[0]);
-        } else {
-            lblBanner.setText("[Lỗi tải ảnh Banner]");
-        }
+        pnlContent.add(pnlStats, BorderLayout.NORTH);
 
-        Timer bannerTimer = new Timer(3000, new ActionListener() {
-            int currentBannerIndex = 0; 
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (bannerIcons.length > 0 && bannerIcons[0] != null) {
-                    currentBannerIndex++; 
-                    if (currentBannerIndex >= bannerIcons.length) {
-                        currentBannerIndex = 0;
-                    }
-                    lblBanner.setIcon(bannerIcons[currentBannerIndex]);
-                }
-            }
-        });
-        bannerTimer.start(); 
+        // --- 2. Khung Danh Sách Phim ---
+        JPanel pnlBottom = new JPanel(new BorderLayout(5, 15));
+        pnlBottom.setBackground(bgDark);
 
-        // --- Khung chứa Tiêu đề và Danh sách phim ---
-        JPanel pnlBottom = new JPanel(new BorderLayout(5, 5));
-        pnlBottom.setBackground(darkBg);
-
-        JLabel lblTitlePhim = new JLabel("🎥 Danh sách phim");
+        JLabel lblTitlePhim = new JLabel("Phim đang chiếu (Now Showing)");
         lblTitlePhim.setForeground(textWhite);
-        lblTitlePhim.setFont(new Font("Arial", Font.BOLD, 14));
-        lblTitlePhim.setBorder(new EmptyBorder(5, 5, 5, 0));
+        lblTitlePhim.setFont(new Font("Segoe UI", Font.BOLD, 18));
         pnlBottom.add(lblTitlePhim, BorderLayout.NORTH);
 
-        JPanel pnlMovieList = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 10));
-        pnlMovieList.setBackground(darkBg);
+        JPanel pnlMovieList = new JPanel(new FlowLayout(FlowLayout.LEFT, 20, 0));
+        pnlMovieList.setBackground(bgDark);
 
-        pnlMovieList.add(createMovieCard("images/datrungphuongnam.jpg", "Đất rừng phương nam", "Phim lịch sử - hành động"));
-        pnlMovieList.add(createMovieCard("images/springjourney.jpg", "Bố Già", "Phim tâm lý - gia đình"));
-        pnlMovieList.add(createMovieCard("images/thejunglebook.jpg", "Avatar 2", "Phim khoa học viễn tưởng"));
+        // Nạp danh sách phim
+        pnlMovieList.add(createMovieCard("images/datrungphuongnam.jpg", "Đất Rừng Phương Nam", "Lịch sử, Hành động"));
+        pnlMovieList.add(createMovieCard("images/springjourney.jpg", "Bố Già", "Tâm lý, Gia đình"));
+        pnlMovieList.add(createMovieCard("images/thejunglebook.jpg", "Avatar 2: Dòng Chảy", "Khoa học viễn tưởng"));
 
         JScrollPane scrollPane = new JScrollPane(pnlMovieList);
         scrollPane.setBorder(BorderFactory.createEmptyBorder());
-        scrollPane.setBackground(darkBg);
-        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER); 
+        scrollPane.setBackground(bgDark);
+        scrollPane.getViewport().setBackground(bgDark);
         
         pnlBottom.add(scrollPane, BorderLayout.CENTER);
         pnlContent.add(pnlBottom, BorderLayout.CENTER);
@@ -176,44 +233,55 @@ public class UI_TrangChu extends JFrame implements ActionListener {
         return pnlContent;
     }
 
-    // --- HÀM HỖ TRỢ ---
-    private JButton createMenuButton(String text) {
-        JButton btn = new JButton(text);
-        btn.setFont(new Font("Arial", Font.BOLD, 14));
-        btn.setForeground(textWhite);
-        btn.setBackground(sidebarBg);
-        btn.setFocusPainted(false);
-        btn.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
-        btn.setHorizontalAlignment(SwingConstants.LEFT); 
-        btn.addActionListener(this);
-        return btn;
+    // --- HÀM TẠO THẺ THỐNG KÊ (QUICK STAT CARD) ---
+    private JPanel createStatCard(String title, String value, Color accentColor) {
+        JPanel card = new JPanel(new BorderLayout());
+        card.setBackground(new Color(30, 30, 30));
+        card.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createMatteBorder(0, 4, 0, 0, accentColor), // Vạch màu bên trái
+            new EmptyBorder(15, 20, 15, 20)
+        ));
+
+        JLabel lblTitle = new JLabel(title);
+        lblTitle.setForeground(textGray);
+        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 14));
+
+        JLabel lblValue = new JLabel(value);
+        lblValue.setForeground(textWhite);
+        lblValue.setFont(new Font("Segoe UI", Font.BOLD, 24));
+
+        card.add(lblTitle, BorderLayout.NORTH);
+        card.add(lblValue, BorderLayout.SOUTH);
+        return card;
     }
 
+    // --- HÀM TẠO THẺ PHIM (MOVIE CARD) ---
     private JPanel createMovieCard(String imagePath, String title, String desc) {
         JPanel card = new JPanel(new BorderLayout());
-        card.setBackground(new Color(40, 40, 40));
-        card.setPreferredSize(new Dimension(200, 280)); 
-        card.setBorder(BorderFactory.createLineBorder(new Color(60, 60, 60)));
+        card.setBackground(new Color(35, 35, 35));
+        card.setPreferredSize(new Dimension(220, 330)); 
+        card.setBorder(new EmptyBorder(10, 10, 10, 10));
 
         JLabel lblImg = new JLabel();
         lblImg.setHorizontalAlignment(JLabel.CENTER);
-        ImageIcon icon = scaleImage(imagePath, 180, 220);
+        ImageIcon icon = scaleImage(imagePath, 200, 250);
         if(icon != null) lblImg.setIcon(icon);
         else lblImg.setText("No Image");
         lblImg.setForeground(Color.WHITE);
 
         JLabel lblTitle = new JLabel(title, JLabel.CENTER);
         lblTitle.setForeground(Color.WHITE);
-        lblTitle.setFont(new Font("Arial", Font.BOLD, 13));
+        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        lblTitle.setBorder(new EmptyBorder(10, 0, 2, 0));
 
-        JLabel lblDesc = new JLabel("<html><center>" + desc + "</center></html>", JLabel.CENTER);
-        lblDesc.setForeground(Color.GRAY);
-        lblDesc.setFont(new Font("Arial", Font.PLAIN, 11));
+        JLabel lblDesc = new JLabel(desc, JLabel.CENTER);
+        lblDesc.setForeground(colorGold);
+        lblDesc.setFont(new Font("Segoe UI", Font.ITALIC, 12));
 
-        JPanel pnlText = new JPanel(new GridLayout(2, 1));
-        pnlText.setBackground(new Color(40, 40, 40));
-        pnlText.add(lblTitle);
-        pnlText.add(lblDesc);
+        JPanel pnlText = new JPanel(new BorderLayout());
+        pnlText.setBackground(new Color(35, 35, 35));
+        pnlText.add(lblTitle, BorderLayout.NORTH);
+        pnlText.add(lblDesc, BorderLayout.SOUTH);
 
         card.add(lblImg, BorderLayout.CENTER);
         card.add(pnlText, BorderLayout.SOUTH);
@@ -233,52 +301,40 @@ public class UI_TrangChu extends JFrame implements ActionListener {
     }
     
     private void phanQuyen() {
-    	 if (userLogin == null) return;
-
-    	    String role = userLogin.getVaiTro();
-
-    	    if (role.equals("STAFF")) {
-
-    	        btnNhanVien.setEnabled(false);
-    	        btnPhim.setEnabled(false);
-    	        btnSuatChieu.setEnabled(false);
-
-    	        btnNhanVien.setToolTipText("Bạn không có quyền truy cập");
-    	        btnPhim.setToolTipText("Bạn không có quyền truy cập");
-    	        btnSuatChieu.setToolTipText("Bạn không có quyền truy cập");
-
-    	        setTitle("Hệ thống (Nhân viên: " + userLogin.getHoTen() + ")");
-    	        
-    	    } else if (role.equals("MANAGER")) {
-
-    	        setTitle("Hệ thống (Admin: " + userLogin.getHoTen() + ")");
-    	        
-    	    }
+         if (userLogin == null) return;
+            String role = userLogin.getVaiTro();
+            if (role.equals("STAFF")) {
+                btnNhanVien.setEnabled(false);
+                btnPhim.setEnabled(false);
+                btnSuatChieu.setEnabled(false);
+                btnNhanVien.setToolTipText("Bạn không có quyền truy cập");
+                btnPhim.setToolTipText("Bạn không có quyền truy cập");
+                btnSuatChieu.setToolTipText("Bạn không có quyền truy cập");
+            }
     }
     
     // --- XỬ LÝ SỰ KIỆN CHUYỂN TRANG ---
     @Override
     public void actionPerformed(ActionEvent e) {
         Object source = e.getSource();
-        
         String role = (userLogin != null) ? userLogin.getVaiTro() : "";
 
         if (source == btnTrangChu) {
             cardLayout.show(pnlCards, "TrangChu");
         } else if (source == btnPhim) {
-        	if (role.equals("STAFF")) {
+            if (role.equals("STAFF")) {
                 JOptionPane.showMessageDialog(this, "Nhân viên không có quyền quản lý Phim!");
                 return;
-        	}
-        	cardLayout.show(pnlCards, "Phim");
+            }
+            cardLayout.show(pnlCards, "Phim");
         } else if (source == btnSuatChieu) {
-        	if (role.equals("STAFF")) {
+            if (role.equals("STAFF")) {
                 JOptionPane.showMessageDialog(this, "Nhân viên không có quyền quản lý Suất chiếu!");
                 return;
             }
             cardLayout.show(pnlCards, "SuatChieu");
         } else if (source == btnNhanVien) {
-        	if (role.equals("STAFF")) {
+            if (role.equals("STAFF")) {
                 JOptionPane.showMessageDialog(this, "Chỉ Quản lý mới có quyền truy cập Nhân viên!");
                 return;
             }
@@ -287,7 +343,7 @@ public class UI_TrangChu extends JFrame implements ActionListener {
             Component[] comps = pnlCards.getComponents();
             for (Component c : comps) {
                 if (c instanceof PNL_KhachHang) {
-                    ((PNL_KhachHang) c).loadDataToTable(); // Cập nhật bảng
+                    ((PNL_KhachHang) c).loadDataToTable(); 
                 }
             }
             cardLayout.show(pnlCards, "KhachHang");
@@ -295,7 +351,7 @@ public class UI_TrangChu extends JFrame implements ActionListener {
             Component[] comps = pnlCards.getComponents();
             for (Component c : comps) {
                 if (c instanceof PNL_HoaDon) {
-                    ((PNL_HoaDon) c).loadDataHoaDon(); // Cập nhật hóa đơn
+                    ((PNL_HoaDon) c).loadDataHoaDon(); 
                 }
             }
             cardLayout.show(pnlCards, "HoaDon");
@@ -305,7 +361,7 @@ public class UI_TrangChu extends JFrame implements ActionListener {
             Component[] comps = pnlCards.getComponents();
             for (Component c : comps) {
                 if (c instanceof PNL_ThongKe) {
-                    ((PNL_ThongKe) c).loadData(); // Cập nhật thống kê
+                    ((PNL_ThongKe) c).loadData(); 
                 }
             }
             cardLayout.show(pnlCards, "ThongKe");
@@ -315,9 +371,6 @@ public class UI_TrangChu extends JFrame implements ActionListener {
                 new UI_DangNhap().setVisible(true);
                 this.dispose();
             }
-        } else {
-            JButton clickedBtn = (JButton) source;
-            JOptionPane.showMessageDialog(this, "Chức năng '" + clickedBtn.getText() + "' đang phát triển!");
         }
     }
 }
