@@ -104,7 +104,7 @@ public class UI_DangNhap extends JFrame implements ActionListener {
         setDefaultCloseOperation(EXIT_ON_CLOSE);
 
         // Đã sửa lại đường dẫn ảnh thành "images/bg_login.jpg" cho khớp cấu trúc thư mục của bạn
-        BackgroundPanel bgPanel = new BackgroundPanel("images/bg_login.jpg"); 
+        BackgroundPanel bgPanel = new BackgroundPanel("images/login.png"); 
         bgPanel.setLayout(new GridBagLayout()); 
         setContentPane(bgPanel);
 
@@ -116,7 +116,7 @@ public class UI_DangNhap extends JFrame implements ActionListener {
         // --- TIÊU ĐỀ ---
         JLabel lblTitle = new JLabel("RẠP CHIẾU PHIM", JLabel.CENTER);
         lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 26));
-        lblTitle.setForeground(new Color(212, 175, 55)); // Màu Vàng Gold hoàng gia
+        lblTitle.setForeground(new Color(220, 20, 60)); // Màu Vàng Gold hoàng gia
         lblTitle.setBounds(0, 50, 420, 40);
         pnlLogin.add(lblTitle);
 
@@ -155,12 +155,12 @@ public class UI_DangNhap extends JFrame implements ActionListener {
         // --- NÚT ĐĂNG NHẬP (Solid Gold Button) ---
         // Nền vàng kim loại, chữ đen đậm -> Rất quyền lực và nổi bật
         btnLogin = new PremiumButton(
-            "ĐĂNG NHẬP", 
-            new Color(212, 175, 55),    // Màu nền bình thường (Vàng Gold)
-            new Color(235, 195, 75),    // Màu khi Hover (Vàng sáng)
-            new Color(20, 20, 20),      // Màu chữ (Đen than)
-            null                        // Không viền
-        );
+        	    "ĐĂNG NHẬP", 
+        	    new Color(220, 20, 60),   // đỏ chính
+        	    new Color(255, 80, 100),  // hover đỏ sáng hơn
+        	    Color.WHITE,              // chữ trắng cho dễ nhìn
+        	    null
+        	);
         btnLogin.setBounds(60, 320, 145, 45);
         pnlLogin.add(btnLogin);
 
