@@ -39,8 +39,8 @@ public class PNL_NhanVien extends JPanel implements ActionListener, MouseListene
         pnlInput.setBorder(new EmptyBorder(15, 20, 15, 20)); 
 
         TitledBorder border = BorderFactory.createTitledBorder(
-                BorderFactory.createLineBorder(new Color(100, 100, 100), 1), "THÔNG TIN NHÂN VIÊN",
-                TitledBorder.LEFT, TitledBorder.TOP, new Font("Arial", Font.BOLD, 14), new Color(200, 200, 200)
+                BorderFactory.createLineBorder(new Color(220, 20, 60), 1), "THÔNG TIN NHÂN VIÊN",
+                TitledBorder.LEFT, TitledBorder.TOP, new Font("Arial", Font.BOLD, 14), new Color(220, 20, 60)
         );
         
         JPanel pnlInputWrapper = new JPanel(new BorderLayout());

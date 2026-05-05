@@ -58,8 +58,8 @@ public class PNL_HoaDon extends JPanel implements MouseListener {
         pnlBottom.setOpaque(false);
         
         TitledBorder borderCT = BorderFactory.createTitledBorder(
-                BorderFactory.createLineBorder(Color.GRAY), "CHI TIẾT VÉ PHIM (Chọn Hóa Đơn ở trên để xem)");
-        borderCT.setTitleColor(new Color(46, 204, 113)); // Màu xanh lá
+                BorderFactory.createLineBorder(new Color(220, 20, 60)), "CHI TIẾT VÉ PHIM (Chọn Hóa Đơn ở trên để xem)");
+        borderCT.setTitleColor(new Color(220, 20, 60)); // Màu đỏ
         borderCT.setTitleFont(new Font("Arial", Font.BOLD, 14));
         pnlBottom.setBorder(borderCT);
 
