@@ -13,12 +13,10 @@ import java.util.ArrayList;
 import javax.swing.*;
 import javax.swing.border.*;
 import javax.swing.table.DefaultTableModel;
-import javax.swing.table.JTableHeader;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.TableCellRenderer;
+
 import com.toedter.calendar.JDateChooser;
 
-class PNL_SuatChieu extends JPanel implements ActionListener, MouseListener {
+public class PNL_SuatChieu extends JPanel implements ActionListener, MouseListener {
 
     private JTextField txtMaSuat;
     private JDateChooser txtNgay;
@@ -33,141 +31,100 @@ class PNL_SuatChieu extends JPanel implements ActionListener, MouseListener {
     private SuatChieuDAO suatChieuDAO;
     private PhimDAO phimDAO;
 
-    private final Color bg = new Color(15, 15, 15);
-    private final Color card = new Color(28, 28, 28);
-    private final Color text = new Color(220, 220, 220);
-
     public PNL_SuatChieu() {
 
         suatChieuDAO = new SuatChieuDAO();
         phimDAO = new PhimDAO();
 
         setLayout(new BorderLayout(15, 15));
-        setBackground(bg);
-        setBorder(new EmptyBorder(20, 20, 20, 20));
+        setBackground(new Color(30, 30, 30));
+        setBorder(new EmptyBorder(15, 15, 15, 15));
 
-        // ================= TOP =================
-        JPanel pnlTop = new JPanel(new BorderLayout(10, 10));
+        // ================= FORM INPUT =================
+        JPanel pnlTop = new JPanel(new BorderLayout(0, 15));
         pnlTop.setOpaque(false);
 
-        JPanel pnlInput = new JPanel(new GridLayout(3, 4, 18, 18));
-        pnlInput.setBackground(card);
-        pnlInput.setBorder(BorderFactory.createTitledBorder(
-                BorderFactory.createLineBorder(new Color(140, 0, 0)),
+        JPanel pnlInput = new JPanel(new GridLayout(3, 4, 20, 20));
+        pnlInput.setOpaque(false);
+        pnlInput.setBorder(new EmptyBorder(15, 20, 15, 20));
+
+        TitledBorder border = BorderFactory.createTitledBorder(
+                BorderFactory.createLineBorder(new Color(100, 100, 100)),
                 "THÔNG TIN SUẤT CHIẾU",
                 TitledBorder.LEFT,
                 TitledBorder.TOP,
-                new Font("Segoe UI", Font.BOLD, 16),
-                new Color(255, 60, 80)
-        ));
+                new Font("Segoe UI", Font.BOLD, 14),
+                new Color(200, 200, 200)
+        );
+        pnlInput.setBorder(border);
 
-        txtMaSuat = styleInput();
+        pnlInput.add(createLabel("Mã Suất:"));
+        txtMaSuat = createTextField();
+        pnlInput.add(txtMaSuat);
 
+        pnlInput.add(createLabel("Phim:"));
         cboPhim = new JComboBox<>();
+        loadPhimToComboBox();
+        pnlInput.add(cboPhim);
+
+        pnlInput.add(createLabel("Phòng:"));
         cboPhong = new JComboBox<>(new String[]{
                 "Phòng 1 (2D)", "Phòng 2 (3D)",
                 "Phòng 3 (2D)", "Phòng 4 (3D)", "VIP"
         });
-
-        txtNgay = new JDateChooser();
-        txtNgay.setDateFormatString("yyyy-MM-dd");
-
-        spnGio = new JSpinner(new SpinnerDateModel());
-        spnGio.setEditor(new JSpinner.DateEditor(spnGio, "HH:mm"));
-
-        loadPhimToComboBox();
-
-        pnlInput.add(lbl("MÃ SUẤT"));
-        pnlInput.add(txtMaSuat);
-
-        pnlInput.add(lbl("PHIM"));
-        pnlInput.add(cboPhim);
-
-        pnlInput.add(lbl("PHÒNG"));
         pnlInput.add(cboPhong);
 
-        pnlInput.add(lbl("NGÀY"));
+        pnlInput.add(createLabel("Ngày chiếu:"));
+        txtNgay = new JDateChooser();
+        txtNgay.setDateFormatString("yyyy-MM-dd");
         pnlInput.add(txtNgay);
 
-        pnlInput.add(lbl("GIỜ"));
+        pnlInput.add(createLabel("Giờ chiếu:"));
+        spnGio = new JSpinner(new SpinnerDateModel());
+        spnGio.setEditor(new JSpinner.DateEditor(spnGio, "HH:mm"));
         pnlInput.add(spnGio);
 
         pnlTop.add(pnlInput, BorderLayout.CENTER);
 
         // ================= BUTTON =================
-        JPanel pnlBtn = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 12));
-        pnlBtn.setOpaque(false);
+        JPanel pnlBtns = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 0));
+        pnlBtns.setOpaque(false);
 
-        btnThem = btn("THÊM", new Color(220, 20, 60));
-        btnSua = btn("SỬA", new Color(255, 140, 0));
-        btnXoa = btn("XÓA", new Color(200, 0, 40));
-        btnXoaRong = btn("RESET", new Color(80, 80, 80));
+        btnThem = createButton("Thêm", new Color(46, 204, 113));
+        btnSua = createButton("Sửa", new Color(52, 152, 219));
+        btnXoa = createButton("Xóa", new Color(231, 76, 60));
+        btnXoaRong = createButton("Xóa Rỗng", new Color(127, 140, 141));
 
-        pnlBtn.add(btnThem);
-        pnlBtn.add(btnSua);
-        pnlBtn.add(btnXoa);
-        pnlBtn.add(btnXoaRong);
+        pnlBtns.add(btnThem);
+        pnlBtns.add(btnSua);
+        pnlBtns.add(btnXoa);
+        pnlBtns.add(btnXoaRong);
 
-        pnlTop.add(pnlBtn, BorderLayout.SOUTH);
+        pnlTop.add(pnlBtns, BorderLayout.SOUTH);
 
         add(pnlTop, BorderLayout.NORTH);
 
         // ================= TABLE =================
-        String[] cols = {"Mã", "Phim", "Phòng", "Ngày", "Giờ"};
+        String[] cols = {"Mã Suất", "Mã Phim", "Phòng", "Ngày", "Giờ"};
         model = new DefaultTableModel(cols, 0);
 
         table = new JTable(model);
-        table.setRowHeight(30);
 
-        table.setBackground(new Color(20, 20, 20));
+        table.setRowHeight(35);
+        table.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+        table.setBackground(new Color(30, 30, 30));
         table.setForeground(Color.WHITE);
         table.setGridColor(new Color(60, 60, 60));
+        table.setSelectionBackground(new Color(52, 152, 219));
+        table.setSelectionForeground(Color.WHITE);
 
-        table.setFillsViewportHeight(true);
-
-        // ================= HEADER FIX (QUAN TRỌNG) =================
-        JTableHeader header = table.getTableHeader();
-        header.setOpaque(true);
-        header.setBackground(new Color(140, 0, 0));
-        header.setForeground(Color.WHITE);
-        header.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        header.setReorderingAllowed(false);
-        header.setResizingAllowed(false);
-        header.setPreferredSize(new Dimension(header.getWidth(), 35));
-
-        // ================= CELL PADDING =================
-        table.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
-            @Override
-            public Component getTableCellRendererComponent(
-                    JTable table, Object value,
-                    boolean isSelected, boolean hasFocus,
-                    int row, int column) {
-
-                JLabel lbl = (JLabel) super.getTableCellRendererComponent(
-                        table, value, isSelected, hasFocus, row, column);
-
-                lbl.setBorder(BorderFactory.createEmptyBorder(5, 12, 5, 12));
-                lbl.setForeground(Color.WHITE);
-                lbl.setOpaque(true);
-
-                if (isSelected) {
-                    lbl.setBackground(new Color(90, 0, 0));
-                } else {
-                    lbl.setBackground(new Color(20, 20, 20));
-                }
-
-                return lbl;
-            }
-        });
-
-        // ================= SCROLL FIX =================
         JScrollPane sp = new JScrollPane(table);
-        sp.setBorder(BorderFactory.createLineBorder(new Color(60, 0, 0)));
-        sp.getViewport().setBackground(new Color(20, 20, 20));
+        sp.getViewport().setBackground(new Color(30, 30, 30));
+        sp.setBorder(BorderFactory.createLineBorder(new Color(100, 100, 100)));
 
         add(sp, BorderLayout.CENTER);
 
-        // events
+        // ================= EVENTS =================
         btnThem.addActionListener(this);
         btnSua.addActionListener(this);
         btnXoa.addActionListener(this);
@@ -177,33 +134,35 @@ class PNL_SuatChieu extends JPanel implements ActionListener, MouseListener {
         loadDataToTable();
     }
 
-    // ================= STYLE =================
-    private JTextField styleInput() {
-        JTextField t = new JTextField();
-        t.setBackground(new Color(45, 45, 45));
-        t.setForeground(Color.WHITE);
-        t.setCaretColor(Color.RED);
-        t.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        t.setBorder(BorderFactory.createEmptyBorder(8, 10, 8, 10));
-        return t;
+    // ================= UI HELPERS =================
+    private JLabel createLabel(String text) {
+        JLabel lbl = new JLabel(text, SwingConstants.RIGHT);
+        lbl.setForeground(new Color(220, 220, 220));
+        lbl.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        return lbl;
     }
 
-    private JLabel lbl(String s) {
-        JLabel l = new JLabel(s);
-        l.setForeground(text);
-        l.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        return l;
+    private JTextField createTextField() {
+        JTextField txt = new JTextField();
+        txt.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+        txt.setBackground(new Color(50, 50, 50));
+        txt.setForeground(Color.WHITE);
+        txt.setCaretColor(Color.WHITE);
+        txt.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(100, 100, 100)),
+                new EmptyBorder(5, 10, 5, 10)
+        ));
+        return txt;
     }
 
-    private JButton btn(String text, Color bg) {
-        JButton b = new JButton(text);
-        b.setBackground(bg);
-        b.setForeground(Color.WHITE);
-        b.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        b.setFocusPainted(false);
-        b.setBorderPainted(false);
-        b.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        return b;
+    private JButton createButton(String text, Color bg) {
+        JButton btn = new JButton(text);
+        btn.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        btn.setBackground(bg);
+        btn.setForeground(Color.WHITE);
+        btn.setFocusPainted(false);
+        btn.setPreferredSize(new Dimension(120, 38));
+        return btn;
     }
 
     // ================= DATA =================
@@ -238,19 +197,19 @@ class PNL_SuatChieu extends JPanel implements ActionListener, MouseListener {
     public void actionPerformed(ActionEvent e) {
 
         if (e.getSource() == btnThem) {
-            suatChieuDAO.themSuatChieu(toEntity());
+            suatChieuDAO.themSuatChieu(getForm());
             loadDataToTable();
         }
 
         if (e.getSource() == btnSua) {
-            suatChieuDAO.suaSuatChieu(toEntity());
+            suatChieuDAO.suaSuatChieu(getForm());
             loadDataToTable();
         }
 
         if (e.getSource() == btnXoa) {
-            int r = table.getSelectedRow();
-            if (r != -1) {
-                String ma = model.getValueAt(r, 0).toString();
+            int row = table.getSelectedRow();
+            if (row != -1) {
+                String ma = model.getValueAt(row, 0).toString();
                 suatChieuDAO.xoaSuatChieu(ma);
                 loadDataToTable();
             }
@@ -264,8 +223,8 @@ class PNL_SuatChieu extends JPanel implements ActionListener, MouseListener {
         }
     }
 
-    private SuatChieu toEntity() {
-        String ma = txtMaSuat.getText();
+    private SuatChieu getForm() {
+        String ma = txtMaSuat.getText().trim();
         String phim = cboPhim.getSelectedItem().toString().split(" - ")[0];
         String phong = cboPhong.getSelectedItem().toString();
 
@@ -278,7 +237,8 @@ class PNL_SuatChieu extends JPanel implements ActionListener, MouseListener {
         return new SuatChieu(ma, phim, phong, ngay, gio);
     }
 
-    @Override public void mouseClicked(MouseEvent e) {
+    @Override
+    public void mouseClicked(MouseEvent e) {
         int r = table.getSelectedRow();
         if (r != -1) {
             txtMaSuat.setText(model.getValueAt(r, 0).toString());
