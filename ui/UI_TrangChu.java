@@ -266,7 +266,7 @@ public class UI_TrangChu extends JFrame implements ActionListener {
         String[] topMovies = {
             "Avatar 2 - 80 vé",
             "Bố Già - 45 vé",
-            "Đất Rừng Phương Nam - 30 vé"
+            "Phí phông - 30 vé"
         };
 
         for (String s : topMovies) {

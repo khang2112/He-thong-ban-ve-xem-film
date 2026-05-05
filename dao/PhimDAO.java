@@ -82,4 +82,36 @@ public class PhimDAO {
         }
         return n > 0;
     }
+    //Hàm lấy top phim
+
+    public List<TopPhim> getTop3PhimHomNay() {
+        List<TopPhim> list = new ArrayList<>();
+
+        try {
+            Connection con = Database.getInstance().getConnection(); // ✅ sửa ở đây
+
+            String sql = "SELECT TOP 3 p.TenPhim, SUM(ct.SoLuong) AS SoVeBan " +
+                         "FROM ChiTietHoaDon ct " +
+                         "JOIN Phim p ON p.MaPhim = ct.MaPhim " +
+                         "JOIN HoaDon hd ON hd.MaHoaDon = ct.MaHoaDon " + // ✅ thêm dòng này
+                         "WHERE CAST(hd.NgayLap AS DATE) = CAST(GETDATE() AS DATE) " +
+                         "GROUP BY p.TenPhim " +
+                         "ORDER BY SoVeBan DESC";
+
+            PreparedStatement ps = con.prepareStatement(sql);
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                String ten = rs.getString("TenPhim");
+                int soVe = rs.getInt("SoVeBan");
+
+                list.add(new TopPhim(ten, soVe));
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return list;
+    }
 }
