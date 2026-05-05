@@ -5,8 +5,10 @@ import java.awt.event.*;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 
+import dao.PhimDAO;
 import dao.TaiKhoanDAO;
 import entity.TaiKhoan;
+import entity.TopPhim;
 
 public class UI_TrangChu extends JFrame implements ActionListener {
     // Lưu thông tin người đăng nhập
@@ -240,7 +242,7 @@ public class UI_TrangChu extends JFrame implements ActionListener {
         centerWrap.add(pnlBottom, BorderLayout.CENTER);
 
         // bên phải: top phim
-        centerWrap.add(createTopMoviePanel(), BorderLayout.EAST);
+        centerWrap.add(createTopPhimPanel(), BorderLayout.EAST);
 
         pnlContent.add(centerWrap, BorderLayout.CENTER);
 
@@ -248,39 +250,37 @@ public class UI_TrangChu extends JFrame implements ActionListener {
     }
     
     //TOP PHIM
-    private JPanel createTopMoviePanel() {
-        JPanel panel = new JPanel();
-        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-        panel.setBackground(new Color(30, 30, 30));
-        panel.setBorder(new EmptyBorder(15, 15, 15, 15));
-        panel.setPreferredSize(new Dimension(280, 0));
+    private JPanel createTopPhimPanel() {
+        JPanel pnl = new JPanel(new BorderLayout());
+        pnl.setBackground(bgDark);
+        pnl.setBorder(new EmptyBorder(10, 10, 10, 10));
 
         JLabel title = new JLabel("Top phim hôm nay");
-        title.setForeground(Color.WHITE);
+        title.setForeground(colorGold);
         title.setFont(new Font("Segoe UI", Font.BOLD, 16));
 
-        panel.add(title);
-        panel.add(Box.createVerticalStrut(10));
+        pnl.add(title, BorderLayout.NORTH);
 
-        //  DATA TẠM (demo trước)
-        String[] topMovies = {
-            "Avatar 2 - 80 vé",
-            "Bố Già - 45 vé",
-            "Phí phông - 30 vé"
-        };
+        JPanel listPanel = new JPanel();
+        listPanel.setLayout(new BoxLayout(listPanel, BoxLayout.Y_AXIS));
+        listPanel.setBackground(bgDark);
 
-        for (String s : topMovies) {
-            JLabel lbl = new JLabel(s);
-            lbl.setForeground(new Color(212, 175, 55));
+        PhimDAO dao = new PhimDAO();
+        java.util.List<TopPhim> list = dao.getTop3PhimHomNay();
+
+        int rank = 1;
+        for (TopPhim tp : list) {
+            JLabel lbl = new JLabel(rank + ". " + tp.getTenPhim() + " - " + tp.getSoVeBan() + " vé");
+            lbl.setForeground(textWhite);
             lbl.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-
-            panel.add(lbl);
-            panel.add(Box.createVerticalStrut(8));
+            listPanel.add(lbl);
+            rank++;
         }
 
-        return panel;
-    }
+        pnl.add(listPanel, BorderLayout.CENTER);
 
+        return pnl;
+    }
     // --- HÀM TẠO THẺ THỐNG KÊ (QUICK STAT CARD) ---
     private JPanel createStatCard(String title, String value, Color accentColor) {
         JPanel card = new JPanel(new BorderLayout());

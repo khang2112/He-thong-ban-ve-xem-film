@@ -7,6 +7,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.ArrayList;
+import entity.TopPhim;   
+import java.util.List;   
 
 public class PhimDAO {
     public ArrayList<Phim> docTuBang() {
@@ -88,12 +90,12 @@ public class PhimDAO {
         List<TopPhim> list = new ArrayList<>();
 
         try {
-            Connection con = Database.getInstance().getConnection(); // ✅ sửa ở đây
+            Connection con = Database.getInstance().getConnection(); 
 
             String sql = "SELECT TOP 3 p.TenPhim, SUM(ct.SoLuong) AS SoVeBan " +
                          "FROM ChiTietHoaDon ct " +
                          "JOIN Phim p ON p.MaPhim = ct.MaPhim " +
-                         "JOIN HoaDon hd ON hd.MaHoaDon = ct.MaHoaDon " + // ✅ thêm dòng này
+                         "JOIN HoaDon hd ON hd.MaHoaDon = ct.MaHoaDon " + 
                          "WHERE CAST(hd.NgayLap AS DATE) = CAST(GETDATE() AS DATE) " +
                          "GROUP BY p.TenPhim " +
                          "ORDER BY SoVeBan DESC";

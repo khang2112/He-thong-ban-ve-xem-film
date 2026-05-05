@@ -23,6 +23,8 @@ INSERT INTO TaiKhoan VALUES ('admin', '123456', N'Nguyễn Dương Khang');
 INSERT INTO Phim VALUES ('P001', N'Mai', N'Tình cảm', 90000);
 INSERT INTO Phim VALUES ('P002', N'Đào, Phở và Piano', N'Lịch sử', 50000);
 INSERT INTO Phim VALUES ('P003', N'Godzilla x Kong', N'Hành động', 120000);
+INSERT INTO Phim VALUES ('P004', N'Phí phông', N'Kinh dị', 120000);
+INSERT INTO Phim VALUES ('P005', N'Trùm sò', N'Hài hước', 220000);
 
 ALTER TABLE TaiKhoan ADD VaiTro NVARCHAR(20);
 
