@@ -90,24 +90,25 @@ public class PhimDAO {
         List<TopPhim> list = new ArrayList<>();
 
         try {
-            Connection con = Database.getInstance().getConnection(); 
+            Connection con = Database.getInstance().getConnection();
 
-            String sql = "SELECT TOP 3 p.TenPhim, SUM(ct.SoLuong) AS SoVeBan " +
-                         "FROM ChiTietHoaDon ct " +
-                         "JOIN Phim p ON p.MaPhim = ct.MaPhim " +
-                         "JOIN HoaDon hd ON hd.MaHoaDon = ct.MaHoaDon " + 
-                         "WHERE CAST(hd.NgayLap AS DATE) = CAST(GETDATE() AS DATE) " +
-                         "GROUP BY p.TenPhim " +
-                         "ORDER BY SoVeBan DESC";
+            String sql =
+                "SELECT TOP 3 p.TenPhim, SUM(ct.SoLuong) AS SoVeBan " +
+                "FROM ChiTietHoaDon ct " +
+                "JOIN Phim p ON p.MaPhim = ct.MaPhim " +
+                "JOIN HoaDon hd ON hd.MaHD = ct.MaHD " +
+                "WHERE CAST(hd.NgayLap AS DATE) = CAST(GETDATE() AS DATE) " +
+                "GROUP BY p.TenPhim " +
+                "ORDER BY SoVeBan DESC";
 
             PreparedStatement ps = con.prepareStatement(sql);
             ResultSet rs = ps.executeQuery();
 
             while (rs.next()) {
-                String ten = rs.getString("TenPhim");
-                int soVe = rs.getInt("SoVeBan");
-
-                list.add(new TopPhim(ten, soVe));
+                list.add(new TopPhim(
+                    rs.getString("TenPhim"),
+                    rs.getInt("SoVeBan")
+                ));
             }
 
         } catch (Exception e) {

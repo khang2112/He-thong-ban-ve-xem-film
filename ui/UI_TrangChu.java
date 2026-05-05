@@ -220,11 +220,13 @@ public class UI_TrangChu extends JFrame implements ActionListener {
         pnlMovieList.setBackground(bgDark);
 
         // Nạp danh sách phim
+        pnlMovieList.add(createMovieCard("images/phiphong.jpg", "Phí phông: Quỷ máu rừng thiên", "Kinh dị, Tâm linh"));
+        pnlMovieList.add(createMovieCard("images/mai.jpg", "Mai", "Tâm lý, Tình cảm"));
         pnlMovieList.add(createMovieCard("images/datrungphuongnam.jpg", "Đất Rừng Phương Nam", "Lịch sử, Hành động"));
         pnlMovieList.add(createMovieCard("images/springjourney.jpg", "Bố Già", "Tâm lý, Gia đình"));
         pnlMovieList.add(createMovieCard("images/thejunglebook.jpg", "Avatar 2: Dòng Chảy", "Khoa học viễn tưởng"));
-        pnlMovieList.add(createMovieCard("images/phiphong.jpg", "Phí phông: Quỷ máu rừng thiên", "Kinh dị, Tâm linh"));
         pnlMovieList.add(createMovieCard("images/trumso.jpg", "Trùm sò", "Hài hước, Hành động"));
+
 
 
         JScrollPane scrollPane = new JScrollPane(pnlMovieList);
@@ -255,12 +257,13 @@ public class UI_TrangChu extends JFrame implements ActionListener {
         pnl.setBackground(bgDark);
         pnl.setBorder(new EmptyBorder(10, 10, 10, 10));
 
+        // ===== TITLE =====
         JLabel title = new JLabel("Top phim hôm nay");
         title.setForeground(colorGold);
         title.setFont(new Font("Segoe UI", Font.BOLD, 16));
-
         pnl.add(title, BorderLayout.NORTH);
 
+        // ===== LIST =====
         JPanel listPanel = new JPanel();
         listPanel.setLayout(new BoxLayout(listPanel, BoxLayout.Y_AXIS));
         listPanel.setBackground(bgDark);
@@ -268,16 +271,81 @@ public class UI_TrangChu extends JFrame implements ActionListener {
         PhimDAO dao = new PhimDAO();
         java.util.List<TopPhim> list = dao.getTop3PhimHomNay();
 
-        int rank = 1;
-        for (TopPhim tp : list) {
-            JLabel lbl = new JLabel(rank + ". " + tp.getTenPhim() + " - " + tp.getSoVeBan() + " vé");
-            lbl.setForeground(textWhite);
-            lbl.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-            listPanel.add(lbl);
-            rank++;
+        if (list == null || list.isEmpty()) {
+            JLabel empty = new JLabel("Chưa có dữ liệu hôm nay");
+            empty.setForeground(textGray);
+            listPanel.add(empty);
+        } else {
+
+            int rank = 1;
+
+            for (TopPhim tp : list) {
+
+                JPanel item = new JPanel(new BorderLayout());
+                item.setPreferredSize(new Dimension(220, 55));
+                item.setMaximumSize(new Dimension(220, 55));
+
+                item.setBorder(new EmptyBorder(8, 10, 8, 10));
+
+                // 🎨 màu theo rank
+                Color bgItem;
+                Color rankColor;
+
+                if (rank == 1) {
+                    bgItem = new Color(60, 50, 20);
+                    rankColor = new Color(255, 215, 0); // vàng top 1
+                } else if (rank == 2) {
+                    bgItem = new Color(45, 45, 45);
+                    rankColor = new Color(180, 180, 180);
+                } else {
+                    bgItem = new Color(35, 35, 35);
+                    rankColor = new Color(150, 150, 150);
+                }
+
+                item.setBackground(bgItem);
+
+                // ===== LEFT (RANK) =====
+                JLabel lblRank = new JLabel("#" + rank + " ");
+                lblRank.setForeground(rankColor);
+                lblRank.setFont(new Font("Segoe UI", Font.BOLD, 16));
+
+                // ===== CENTER (NAME) =====
+                JLabel lblName = new JLabel(tp.getTenPhim());
+                lblName.setForeground(textWhite);
+                lblName.setFont(new Font("Segoe UI", Font.BOLD, 13));
+
+                // ===== RIGHT (SOLD) =====
+                JLabel lblSold = new JLabel(tp.getSoVeBan() + " vé");
+                lblSold.setForeground(colorGold);
+                lblSold.setFont(new Font("Segoe UI", Font.BOLD, 12));
+
+                item.add(lblRank, BorderLayout.WEST);
+                item.add(lblName, BorderLayout.CENTER);
+                item.add(lblSold, BorderLayout.EAST);
+
+                // hover effect nhẹ
+                item.addMouseListener(new java.awt.event.MouseAdapter() {
+                    public void mouseEntered(java.awt.event.MouseEvent e) {
+                        item.setBackground(new Color(70, 70, 70));
+                    }
+
+                    public void mouseExited(java.awt.event.MouseEvent e) {
+                        item.setBackground(bgItem);
+                    }
+                });
+
+                listPanel.add(Box.createVerticalStrut(8));
+                listPanel.add(item);
+
+                rank++;
+            }
         }
 
-        pnl.add(listPanel, BorderLayout.CENTER);
+        JScrollPane scroll = new JScrollPane(listPanel);
+        scroll.setBorder(null);
+        scroll.getViewport().setBackground(bgDark);
+
+        pnl.add(scroll, BorderLayout.CENTER);
 
         return pnl;
     }
