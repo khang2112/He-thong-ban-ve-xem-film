@@ -116,7 +116,7 @@ public class UI_DangNhap extends JFrame implements ActionListener {
         // --- TIÊU ĐỀ ---
         JLabel lblTitle = new JLabel("RẠP CHIẾU PHIM", JLabel.CENTER);
         lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 26));
-        lblTitle.setForeground(new Color(220, 20, 60)); // Màu Vàng Gold hoàng gia
+        lblTitle.setForeground(new Color(220, 20, 60)); 
         lblTitle.setBounds(0, 50, 420, 40);
         pnlLogin.add(lblTitle);
 

@@ -19,6 +19,7 @@ public class UI_TrangChu extends JFrame implements ActionListener {
     private Color bgSidebar = new Color(25, 25, 25);      // Đen thanh bên
     private Color colorHover = new Color(45, 45, 45);     // Xám khi đưa chuột vào
     private Color colorGold = new Color(212, 175, 55);    // Vàng hoàng gia (Accent)
+    private Color colorRed = new Color(220, 20, 60);      // Đỏ ruby
     private Color textWhite = new Color(240, 240, 240);   // Trắng chữ
     private Color textGray = new Color(150, 150, 150);    // Xám chữ phụ
 
@@ -84,7 +85,7 @@ public class UI_TrangChu extends JFrame implements ActionListener {
         
         JLabel lblLogoTitle = new JLabel("CINEMA POS", JLabel.LEFT);
         lblLogoTitle.setFont(new Font("Segoe UI", Font.BOLD, 22));
-        lblLogoTitle.setForeground(colorGold);
+        lblLogoTitle.setForeground(colorRed);
         
         JLabel lblLogoSub = new JLabel("Management System", JLabel.LEFT);
         lblLogoSub.setFont(new Font("Segoe UI", Font.PLAIN, 12));
