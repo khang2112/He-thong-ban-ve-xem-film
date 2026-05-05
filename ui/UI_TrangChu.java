@@ -221,7 +221,9 @@ public class UI_TrangChu extends JFrame implements ActionListener {
         pnlMovieList.add(createMovieCard("images/datrungphuongnam.jpg", "Đất Rừng Phương Nam", "Lịch sử, Hành động"));
         pnlMovieList.add(createMovieCard("images/springjourney.jpg", "Bố Già", "Tâm lý, Gia đình"));
         pnlMovieList.add(createMovieCard("images/thejunglebook.jpg", "Avatar 2: Dòng Chảy", "Khoa học viễn tưởng"));
-        pnlMovieList.add(createMovieCard("images/phiphong.jpg", "Phí phông: Quỷ máu rừng thiên", "Kinh dị, tâm linh"));
+        pnlMovieList.add(createMovieCard("images/phiphong.jpg", "Phí phông: Quỷ máu rừng thiên", "Kinh dị, Tâm linh"));
+        pnlMovieList.add(createMovieCard("images/trumso.jpg", "Trùm sò", "Hài hước, Hành động"));
+
 
         JScrollPane scrollPane = new JScrollPane(pnlMovieList);
         scrollPane.setBorder(BorderFactory.createEmptyBorder());
@@ -229,9 +231,54 @@ public class UI_TrangChu extends JFrame implements ActionListener {
         scrollPane.getViewport().setBackground(bgDark);
         
         pnlBottom.add(scrollPane, BorderLayout.CENTER);
-        pnlContent.add(pnlBottom, BorderLayout.CENTER);
+        
+        //pnlContent.add(pnlBottom, BorderLayout.CENTER);
+        JPanel centerWrap = new JPanel(new BorderLayout(20, 0));
+        centerWrap.setBackground(bgDark);
+
+        // bên trái: phim đang chiếu
+        centerWrap.add(pnlBottom, BorderLayout.CENTER);
+
+        // bên phải: top phim
+        centerWrap.add(createTopMoviePanel(), BorderLayout.EAST);
+
+        pnlContent.add(centerWrap, BorderLayout.CENTER);
 
         return pnlContent;
+    }
+    
+    //TOP PHIM
+    private JPanel createTopMoviePanel() {
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.setBackground(new Color(30, 30, 30));
+        panel.setBorder(new EmptyBorder(15, 15, 15, 15));
+        panel.setPreferredSize(new Dimension(280, 0));
+
+        JLabel title = new JLabel("Top phim hôm nay");
+        title.setForeground(Color.WHITE);
+        title.setFont(new Font("Segoe UI", Font.BOLD, 16));
+
+        panel.add(title);
+        panel.add(Box.createVerticalStrut(10));
+
+        //  DATA TẠM (demo trước)
+        String[] topMovies = {
+            "Avatar 2 - 80 vé",
+            "Bố Già - 45 vé",
+            "Đất Rừng Phương Nam - 30 vé"
+        };
+
+        for (String s : topMovies) {
+            JLabel lbl = new JLabel(s);
+            lbl.setForeground(new Color(212, 175, 55));
+            lbl.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+
+            panel.add(lbl);
+            panel.add(Box.createVerticalStrut(8));
+        }
+
+        return panel;
     }
 
     // --- HÀM TẠO THẺ THỐNG KÊ (QUICK STAT CARD) ---
