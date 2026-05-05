@@ -221,6 +221,7 @@ public class UI_TrangChu extends JFrame implements ActionListener {
         pnlMovieList.add(createMovieCard("images/datrungphuongnam.jpg", "Đất Rừng Phương Nam", "Lịch sử, Hành động"));
         pnlMovieList.add(createMovieCard("images/springjourney.jpg", "Bố Già", "Tâm lý, Gia đình"));
         pnlMovieList.add(createMovieCard("images/thejunglebook.jpg", "Avatar 2: Dòng Chảy", "Khoa học viễn tưởng"));
+        pnlMovieList.add(createMovieCard("images/phiphong.jpg", "Phí phông: Quỷ máu rừng thiên", "Kinh dị, tâm linh"));
 
         JScrollPane scrollPane = new JScrollPane(pnlMovieList);
         scrollPane.setBorder(BorderFactory.createEmptyBorder());
