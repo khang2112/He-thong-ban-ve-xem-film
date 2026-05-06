@@ -43,7 +43,7 @@ public class PNL_BanVe extends JPanel implements ActionListener {
             setFont(new Font("Segoe UI", Font.BOLD, 14));
             setForeground(Color.WHITE);
             setFocusPainted(false);
-            setContentAreaFilled(false); // Tắt nền mặc định của Windows
+            setContentAreaFilled(false); 
             setBorderPainted(false);
             setCursor(new Cursor(Cursor.HAND_CURSOR));
         }
@@ -53,19 +53,17 @@ public class PNL_BanVe extends JPanel implements ActionListener {
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-            // Xác định màu ghế dựa vào trạng thái
             if (!isEnabled()) {
-                g2.setColor(new Color(231, 76, 60)); // Ghế đã bán (Đỏ)
+                g2.setColor(new Color(229, 9, 20)); // Ghế đã bán (Đỏ Netflix)
             } else if (isSelected()) {
                 g2.setColor(new Color(46, 204, 113)); // Ghế đang chọn (Xanh lá)
             } else {
                 g2.setColor(new Color(60, 60, 60)); // Ghế trống (Xám tối)
             }
 
-            // Vẽ khối ghế bo tròn
             g2.fillRoundRect(2, 2, getWidth() - 4, getHeight() - 4, 15, 15);
             g2.dispose();
-            super.paintComponent(g); // Vẽ chữ lên trên cùng
+            super.paintComponent(g); 
         }
     }
 
@@ -100,7 +98,7 @@ public class PNL_BanVe extends JPanel implements ActionListener {
 
     public PNL_BanVe() {
         setLayout(new BorderLayout(20, 20)); 
-        setBackground(new Color(18, 18, 18)); // Nền đen chuẩn POS
+        setBackground(new Color(18, 18, 18)); 
         setBorder(new EmptyBorder(20, 20, 20, 20));
 
         // =========================================
@@ -120,7 +118,6 @@ public class PNL_BanVe extends JPanel implements ActionListener {
         cboSuatChieu = new JComboBox<>();
         cboSuatChieu.setFont(new Font("Segoe UI", Font.BOLD, 15));
         cboSuatChieu.setPreferredSize(new Dimension(420, 40));
-        // Khử giao diện Windows cho ComboBox
         cboSuatChieu.setUI(new BasicComboBoxUI());
         cboSuatChieu.setBackground(new Color(40, 40, 40));
         cboSuatChieu.setForeground(Color.WHITE);
@@ -144,7 +141,7 @@ public class PNL_BanVe extends JPanel implements ActionListener {
         txtMaKH.setPreferredSize(new Dimension(150, 40));
         txtMaKH.setFont(new Font("Segoe UI", Font.BOLD, 18));
         txtMaKH.setBackground(new Color(40, 40, 40));
-        txtMaKH.setForeground(new Color(212, 175, 55)); // Chữ vàng Gold
+        txtMaKH.setForeground(new Color(212, 175, 55)); 
         txtMaKH.setCaretColor(Color.WHITE);
         txtMaKH.setHorizontalAlignment(JTextField.CENTER);
         txtMaKH.setBorder(BorderFactory.createCompoundBorder(
@@ -165,17 +162,15 @@ public class PNL_BanVe extends JPanel implements ActionListener {
         JPanel pnlCenter = new JPanel(new BorderLayout(0, 20));
         pnlCenter.setOpaque(false);
         
-        // Màn hình rạp phim giả lập 3D
         JLabel lblScreen = new JLabel("M À N   H Ì N H", JLabel.CENTER);
         lblScreen.setOpaque(true);
-        lblScreen.setBackground(new Color(41, 128, 185)); // Xanh dương rạp chiếu
+        lblScreen.setBackground(new Color(52, 152, 219)); 
         lblScreen.setForeground(Color.WHITE);
         lblScreen.setFont(new Font("Segoe UI", Font.BOLD, 18));
         lblScreen.setPreferredSize(new Dimension(0, 40));
-        lblScreen.setBorder(BorderFactory.createMatteBorder(0, 0, 5, 0, new Color(52, 152, 219))); // Viền sáng phía dưới
+        lblScreen.setBorder(BorderFactory.createMatteBorder(0, 0, 5, 0, new Color(41, 128, 185))); 
         pnlCenter.add(lblScreen, BorderLayout.NORTH);
 
-        // Lưới ghế: 6 hàng x 10 cột (8 ghế + 2 lối đi)
         pnlSeatMap = new JPanel(new GridLayout(6, 10, 12, 12));
         pnlSeatMap.setOpaque(false);
         pnlSeatMap.setBorder(new EmptyBorder(10, 40, 20, 40));
@@ -184,25 +179,23 @@ public class PNL_BanVe extends JPanel implements ActionListener {
         
         pnlCenter.add(pnlSeatMap, BorderLayout.CENTER);
         
-        // Chú thích
         JPanel pnlLegend = new JPanel(new FlowLayout(FlowLayout.CENTER, 30, 0));
         pnlLegend.setOpaque(false);
         pnlLegend.add(createLegend(new Color(60, 60, 60), "Ghế Trống"));
         pnlLegend.add(createLegend(new Color(46, 204, 113), "Đang Chọn"));
-        pnlLegend.add(createLegend(new Color(231, 76, 60), "Đã Bán"));
+        pnlLegend.add(createLegend(new Color(229, 9, 20), "Đã Bán"));
         pnlCenter.add(pnlLegend, BorderLayout.SOUTH);
 
         add(pnlCenter, BorderLayout.CENTER);
 
         // =========================================
-        // 3. RIGHT: GIỎ HÀNG & THANH TOÁN (POS TICKET)
+        // 3. RIGHT: GIỎ HÀNG & THANH TOÁN
         // =========================================
         JPanel pnlRight = new JPanel(new BorderLayout(0, 15));
         pnlRight.setOpaque(false);
         pnlRight.setPreferredSize(new Dimension(400, 0)); 
         pnlRight.setBorder(new EmptyBorder(0, 20, 0, 0)); 
 
-        // Bảng Giỏ hàng (Cart)
         String[] cartCols = {"Loại", "Ghế", "Thành tiền"};
         cartModel = new DefaultTableModel(cartCols, 0);
         tblCart = new JTable(cartModel);
@@ -212,16 +205,14 @@ public class PNL_BanVe extends JPanel implements ActionListener {
         tblCart.setForeground(Color.WHITE);
         tblCart.setShowGrid(false); 
         
-        // Tùy chỉnh Header của JTable tránh bị màu trắng
         DefaultTableCellRenderer headerRenderer = new DefaultTableCellRenderer();
         headerRenderer.setBackground(new Color(40, 40, 40));
-        headerRenderer.setForeground(new Color(212, 175, 55)); // Chữ vàng
+        headerRenderer.setForeground(new Color(212, 175, 55)); 
         headerRenderer.setFont(new Font("Segoe UI", Font.BOLD, 13));
         for (int i = 0; i < tblCart.getModel().getColumnCount(); i++) {
             tblCart.getColumnModel().getColumn(i).setHeaderRenderer(headerRenderer);
         }
 
-        // Căn phải cho cột tiền
         DefaultTableCellRenderer rightRenderer = new DefaultTableCellRenderer();
         rightRenderer.setHorizontalAlignment(JLabel.RIGHT);
         tblCart.getColumnModel().getColumn(2).setCellRenderer(rightRenderer);
@@ -241,7 +232,6 @@ public class PNL_BanVe extends JPanel implements ActionListener {
         
         pnlRight.add(pnlCartWrapper, BorderLayout.CENTER);
 
-        // Khung chốt tiền (Checkout Box)
         JPanel pnlCheckout = new JPanel(new BorderLayout(0, 15));
         pnlCheckout.setBackground(new Color(35, 35, 35));
         pnlCheckout.setBorder(BorderFactory.createCompoundBorder(
@@ -269,7 +259,7 @@ public class PNL_BanVe extends JPanel implements ActionListener {
         pnlActionBtns.setOpaque(false);
         
         btnHuy = new PosButton("HỦY BỎ", new Color(100, 100, 100), Color.WHITE);
-        btnThanhToan = new PosButton("THANH TOÁN", new Color(41, 128, 185), Color.WHITE);
+        btnThanhToan = new PosButton("THANH TOÁN", new Color(229, 9, 20), Color.WHITE); // Đổi nút thanh toán sang Đỏ Netflix
         
         pnlActionBtns.add(btnHuy);
         pnlActionBtns.add(btnThanhToan);
@@ -284,18 +274,16 @@ public class PNL_BanVe extends JPanel implements ActionListener {
         cboSuatChieu.addActionListener(e -> loadGheTheoSuat()); 
     }
 
-    // --- Hàm sinh sơ đồ ghế ---
     private void taoSoDoGheChuyenNghiep() {
         String[] hang = {"A", "B", "C", "D", "E", "F"};
-        
         for (int i = 0; i < hang.length; i++) {
             int gheSo = 1;
             for (int col = 0; col < 10; col++) {
                 if (col == 2 || col == 7) {
-                    pnlSeatMap.add(new JLabel("")); // Lối đi
+                    pnlSeatMap.add(new JLabel("")); 
                 } else {
                     String tenGhe = hang[i] + gheSo;
-                    SeatButton btnGhe = new SeatButton(tenGhe); // Dùng class tự chế
+                    SeatButton btnGhe = new SeatButton(tenGhe); 
                     
                     btnGhe.addActionListener(e -> {
                         if (btnGhe.isSelected()) gheDangChon.add(tenGhe);
@@ -311,7 +299,6 @@ public class PNL_BanVe extends JPanel implements ActionListener {
         }
     }
 
-    // --- Cập nhật Bảng Giỏ Hàng ---
     private void capNhatGioHang() {
         cartModel.setRowCount(0); 
         double tongTien = 0;
@@ -345,13 +332,12 @@ public class PNL_BanVe extends JPanel implements ActionListener {
 
         for (SeatButton btn : listGhế) {
             if (gheDaBan.contains(btn.getText())) {
-                btn.setEnabled(false); // Sẽ tự động chuyển thành màu Đỏ nhờ hàm paintComponent
+                btn.setEnabled(false); 
             }
         }
     }
     
     private void loadSCMoiNhat() {
-        // Tắt sự kiện tạm thời để không bị lỗi khi clear data
         ActionListener[] listeners = cboSuatChieu.getActionListeners();
         for (ActionListener l : listeners) cboSuatChieu.removeActionListener(l);
         
@@ -367,7 +353,6 @@ public class PNL_BanVe extends JPanel implements ActionListener {
             cboSuatChieu.addItem(hienThi);
         }
         
-        // Bật lại sự kiện
         for (ActionListener l : listeners) cboSuatChieu.addActionListener(l);
         
         if(cboSuatChieu.getItemCount() > 0) {
@@ -394,6 +379,60 @@ public class PNL_BanVe extends JPanel implements ActionListener {
         return p;
     }
 
+    // =========================================================================
+    // HÀM TẠO VÀ IN HÓA ĐƠN (RECEIPT) CHUẨN MÁY IN NHIỆT POS
+    // =========================================================================
+    private void inHoaDon(String maHD, String suatInfo, String maKH, String tongTienStr) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("==========================================\n");
+        sb.append("                CINEMA POS                \n");
+        sb.append("            HÓA ĐƠN THANH TOÁN            \n");
+        sb.append("==========================================\n");
+        sb.append("Mã HĐ: ").append(maHD).append("\n");
+        sb.append("Ngày in: ").append(new SimpleDateFormat("dd/MM/yyyy HH:mm:ss").format(new Date())).append("\n");
+        if (!maKH.isEmpty()) {
+            sb.append("Thẻ Khách hàng: ").append(maKH).append("\n");
+        }
+        sb.append("------------------------------------------\n");
+        sb.append("Suất chiếu: \n").append(suatInfo).append("\n");
+        sb.append("Vị trí ghế: ").append(String.join(", ", gheDangChon)).append("\n");
+        sb.append("Số lượng:   ").append(gheDangChon.size()).append(" vé\n");
+        sb.append("------------------------------------------\n");
+        sb.append("TỔNG TIỀN:                  ").append(tongTienStr).append("\n");
+        sb.append("==========================================\n");
+        sb.append("     CẢM ƠN QUÝ KHÁCH VÀ HẸN GẶP LẠI!     \n");
+        sb.append("        Wifi: Cinema_Free (Pass: 8888)    \n");
+
+        JTextArea txtBill = new JTextArea(sb.toString());
+        txtBill.setFont(new Font("Monospaced", Font.BOLD, 13)); // Dùng font Monospaced để căn lề chuẩn
+        txtBill.setEditable(false);
+        txtBill.setBackground(Color.WHITE);
+        txtBill.setForeground(Color.BLACK);
+        txtBill.setMargin(new Insets(10, 10, 10, 10));
+
+        JScrollPane scroll = new JScrollPane(txtBill);
+        scroll.setPreferredSize(new Dimension(380, 450));
+
+        // Hiện Dialog giả lập hóa đơn và hỏi in
+        Object[] options = {"In Hóa Đơn (Print)", "Đóng lại"};
+        int choice = JOptionPane.showOptionDialog(this, scroll, "Chi tiết Hóa Đơn: " + maHD,
+                JOptionPane.YES_NO_OPTION, JOptionPane.PLAIN_MESSAGE, null, options, options[0]);
+
+        if (choice == JOptionPane.YES_OPTION) {
+            try {
+                // Kích hoạt hộp thoại in của Windows
+                boolean complete = txtBill.print();
+                if (complete) {
+                    JOptionPane.showMessageDialog(this, "Đã gửi lệnh in thành công!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+                } else {
+                    JOptionPane.showMessageDialog(this, "Đã hủy lệnh in.", "Thông báo", JOptionPane.WARNING_MESSAGE);
+                }
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, "Lỗi kết nối máy in: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
     @Override
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() == btnHuy) {
@@ -406,7 +445,8 @@ public class PNL_BanVe extends JPanel implements ActionListener {
             }
             
             String maHD = "HD" + new SimpleDateFormat("HHmmss").format(new Date());
-            String maSuat = cboSuatChieu.getSelectedItem().toString().split(" - ")[0]; 
+            String suatInfo = cboSuatChieu.getSelectedItem().toString();
+            String maSuat = suatInfo.split(" - ")[0]; 
             String maKH = txtMaKH.getText().trim();
             
             if (!maKH.isEmpty()) {
@@ -434,6 +474,11 @@ public class PNL_BanVe extends JPanel implements ActionListener {
                         loiChuc += "\n🎉 Đã tích lũy " + diemThuong + " điểm cho khách hàng " + maKH;
                     }
                     JOptionPane.showMessageDialog(this, loiChuc, "Thành công", JOptionPane.INFORMATION_MESSAGE);
+                    
+                    // GỌI HÀM IN HÓA ĐƠN VỪA TẠO
+                    String tongTienStr = lblTongTien.getText();
+                    inHoaDon(maHD, suatInfo, maKH, tongTienStr);
+                    
                     txtMaKH.setText("");
                     loadGheTheoSuat();
                 } else {
