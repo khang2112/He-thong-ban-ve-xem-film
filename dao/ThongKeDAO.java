@@ -8,108 +8,118 @@ import java.util.ArrayList;
 
 public class ThongKeDAO {
 
-    // 1. Lấy dữ liệu Tổng quan (Tổng số vé đã bán và Tổng doanh thu toàn hệ thống)
-    public double[] layThongKeTongQuan(int thang, int nam, String theLoai) {
-        double[] kq = new double[]{0, 0}; // Mảng 2 phần tử: [0] là Số vé, [1] là Tổng tiền
+    // ==========================================
+    // 1. LẤY THỐNG KÊ TỔNG QUAN (SỐ VÉ & TỔNG TIỀN)
+    // ==========================================
+    public double[] layThongKeTongQuan(int ngay, int thang, int nam, String theLoai) {
+        double[] kq = new double[]{0, 0};
+
         try {
             Connection con = Database.getInstance().getConnection();
-            
+
+            // Kết nối từ Phim -> Hóa Đơn và tính tổng dựa trên GiaVe của từng VePhim
             StringBuilder sql = new StringBuilder(
-                "SELECT COUNT(v.MaVe) as TongSoVe, SUM(v.GiaVe) as TongDoanhThu " +
+                "SELECT COUNT(v.MaVe) as TongSoVe, " +
+                "COALESCE(SUM(v.GiaVe), 0) as TongDoanhThu " +
                 "FROM Phim p " +
                 "JOIN SuatChieu s ON p.MaPhim = s.MaPhim " +
                 "JOIN VePhim v ON s.MaSuat = v.MaSuat " +
+                "JOIN HoaDon hd ON v.MaHD = hd.MaHD " + 
                 "WHERE 1=1 "
             );
 
-            if (thang > 0) {
-                sql.append("AND MONTH(s.NgayChieu) = ? ");
-            }
-            if (nam > 0) {
-                sql.append("AND YEAR(s.NgayChieu) = ? ");
-            }
+            // Điều kiện lọc dựa trên thời gian thực tế lập Hóa Đơn
+            if (ngay > 0) sql.append("AND DAY(hd.NgayLap) = ? ");
+            if (thang > 0) sql.append("AND MONTH(hd.NgayLap) = ? ");
+            if (nam > 0) sql.append("AND YEAR(hd.NgayLap) = ? ");
+            
+            // Điều kiện lọc theo Thể Loại Phim
             if (theLoai != null && !theLoai.isEmpty()) {
                 sql.append("AND p.TheLoai LIKE ? ");
             }
 
             PreparedStatement pst = con.prepareStatement(sql.toString());
 
+            // Gán giá trị tham số
             int index = 1;
-            if (thang > 0) {
-                pst.setInt(index++, thang);
-            }
-            if (nam > 0) {
-                pst.setInt(index++, nam);
-            }
+            if (ngay > 0) pst.setInt(index++, ngay);
+            if (thang > 0) pst.setInt(index++, thang);
+            if (nam > 0) pst.setInt(index++, nam);
             if (theLoai != null && !theLoai.isEmpty()) {
                 pst.setString(index++, "%" + theLoai + "%");
             }
 
             ResultSet rs = pst.executeQuery();
+
             if (rs.next()) {
                 kq[0] = rs.getInt("TongSoVe");
                 kq[1] = rs.getDouble("TongDoanhThu");
             }
+
         } catch (Exception e) {
             e.printStackTrace();
         }
+
         return kq;
     }
 
-    // 2. Thống kê doanh thu theo từng bộ phim (Xếp hạng từ cao xuống thấp)
-    // Trả về danh sách mảng Object chứa: [Tên Phim, Số Vé Bán Được, Tổng Tiền]
-    public ArrayList<Object[]> thongKeDoanhThuTheoPhim(int thang, int nam, String theLoai) {
+    // ==========================================
+    // 2. LẤY THỐNG KÊ DOANH THU CHI TIẾT TỪNG PHIM
+    // ==========================================
+    public ArrayList<Object[]> thongKeDoanhThuTheoPhim(int ngay, int thang, int nam, String theLoai) {
         ArrayList<Object[]> list = new ArrayList<>();
+
         try {
             Connection con = Database.getInstance().getConnection();
-            
-            // Dùng StringBuilder để cộng chuỗi SQL động tùy theo bộ lọc
+
             StringBuilder sql = new StringBuilder(
-                "SELECT p.TenPhim, COUNT(v.MaVe) as SoVe, SUM(v.GiaVe) as DoanhThu " +
+                "SELECT p.TenPhim, " +
+                "COUNT(v.MaVe) as SoVe, " +
+                "COALESCE(SUM(v.GiaVe), 0) as DoanhThu " +
                 "FROM Phim p " +
                 "JOIN SuatChieu s ON p.MaPhim = s.MaPhim " +
                 "JOIN VePhim v ON s.MaSuat = v.MaSuat " +
-                "WHERE 1=1 " // 1=1 là mẹo để nối các điều kiện AND phía sau dễ dàng
+                "JOIN HoaDon hd ON v.MaHD = hd.MaHD " + 
+                "WHERE 1=1 "
             );
 
-            // Nối thêm điều kiện nếu có chọn bộ lọc
-            if (thang > 0) {
-                sql.append("AND MONTH(s.NgayChieu) = ? ");
-            }
-            if (nam > 0) {
-                sql.append("AND YEAR(s.NgayChieu) = ? ");
-            }
+            // Điều kiện lọc dựa trên thời gian thực tế lập Hóa Đơn
+            if (ngay > 0) sql.append("AND DAY(hd.NgayLap) = ? ");
+            if (thang > 0) sql.append("AND MONTH(hd.NgayLap) = ? ");
+            if (nam > 0) sql.append("AND YEAR(hd.NgayLap) = ? ");
+            
             if (theLoai != null && !theLoai.isEmpty()) {
                 sql.append("AND p.TheLoai LIKE ? ");
             }
 
-            // Cuối cùng mới gom nhóm và sắp xếp
+            // Gom nhóm theo Tên Phim và sắp xếp Doanh Thu giảm dần
             sql.append("GROUP BY p.TenPhim ORDER BY DoanhThu DESC");
 
             PreparedStatement pst = con.prepareStatement(sql.toString());
 
-            // Gắn giá trị vào các dấu '?' tương ứng
+            // Gán giá trị tham số
             int index = 1;
-            if (thang > 0) {
-                pst.setInt(index++, thang);
-            }
-            if (nam > 0) {
-                pst.setInt(index++, nam);
-            }
+            if (ngay > 0) pst.setInt(index++, ngay);
+            if (thang > 0) pst.setInt(index++, thang);
+            if (nam > 0) pst.setInt(index++, nam);
             if (theLoai != null && !theLoai.isEmpty()) {
-                pst.setString(index++, "%" + theLoai + "%"); // Dùng % để tìm kiếm gần đúng thể loại
+                pst.setString(index++, "%" + theLoai + "%");
             }
 
             ResultSet rs = pst.executeQuery();
+
             while (rs.next()) {
-                String ten = rs.getString("TenPhim");
-                int soVe = rs.getInt("SoVe");
-                double doanhThu = rs.getDouble("DoanhThu");
-                list.add(new Object[]{ten, soVe, doanhThu});
+                list.add(new Object[]{
+                    rs.getString("TenPhim"),
+                    rs.getInt("SoVe"),
+                    rs.getDouble("DoanhThu")
+                });
             }
+
         } catch (Exception e) {
             e.printStackTrace();
         }
+
         return list;
     }
 }
