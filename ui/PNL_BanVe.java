@@ -1,5 +1,12 @@
 package ui;
 
+import dao.HoaDonDAO;
+import dao.KhachHangDAO;
+import dao.PhimDAO;
+import dao.SuatChieuDAO;
+import entity.Phim;
+import entity.SuatChieu;
+
 import java.awt.*;
 import java.awt.event.*;
 import java.text.NumberFormat;
@@ -15,12 +22,12 @@ import javax.swing.plaf.basic.BasicComboBoxUI;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
-import entity.SuatChieu;
-
 public class PNL_BanVe extends JPanel implements ActionListener {
-    private JComboBox<String> cboSuatChieu;
-    private JPanel pnlSeatMap;
     
+    // --- BỘ 3 COMBOBOX LỌC DỮ LIỆU ---
+    private JComboBox<String> cboPhim, cboNgay, cboSuatChieu;
+    
+    private JPanel pnlSeatMap;
     private DefaultTableModel cartModel;
     private JTable tblCart;
     
@@ -32,9 +39,15 @@ public class PNL_BanVe extends JPanel implements ActionListener {
     private ArrayList<String> gheDangChon = new ArrayList<>();
     private double giaVeHienTai = 80000; 
     
-    private dao.HoaDonDAO hoaDonDAO = new dao.HoaDonDAO();
-    private dao.KhachHangDAO khachHangDAO = new dao.KhachHangDAO(); 
-    private dao.SuatChieuDAO suatChieuDAO = new dao.SuatChieuDAO();
+    // --- DAOs ---
+    private HoaDonDAO hoaDonDAO = new HoaDonDAO();
+    private KhachHangDAO khachHangDAO = new KhachHangDAO(); 
+    private SuatChieuDAO suatChieuDAO = new SuatChieuDAO();
+    private PhimDAO phimDAO = new PhimDAO();
+
+    // --- BỘ NHỚ ĐỆM (CACHE) ĐỂ MÁY POS XỬ LÝ MƯỢT ---
+    private ArrayList<Phim> dsPhimAll = new ArrayList<>();
+    private ArrayList<SuatChieu> dsSuatChieuAll = new ArrayList<>();
 
     // --- LỚP TỰ VẼ GHẾ NGỒI ĐỂ TRÁNH BỊ WINDOWS LÀM TRẮNG ---
     class SeatButton extends JToggleButton {
@@ -102,43 +115,30 @@ public class PNL_BanVe extends JPanel implements ActionListener {
         setBorder(new EmptyBorder(20, 20, 20, 20));
 
         // =========================================
-        // 1. TOP BAR: CHỌN SUẤT CHIẾU & KHÁCH HÀNG
+        // 1. TOP BAR: CHỌN PHIM -> NGÀY -> SUẤT & KHÁCH HÀNG
         // =========================================
-        JPanel pnlTop = new JPanel(new BorderLayout());
+        JPanel pnlTop = new JPanel(new BorderLayout(10, 0));
         pnlTop.setOpaque(false);
         pnlTop.setBorder(new EmptyBorder(0, 0, 10, 0));
 
-        JPanel pnlTopLeft = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 0));
-        pnlTopLeft.setOpaque(false);
+        // Box Lọc dữ liệu bên trái
+        JPanel pnlFilters = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 0));
+        pnlFilters.setOpaque(false);
         
-        JLabel lblChonSuat = new JLabel("SUẤT CHIẾU:");
-        lblChonSuat.setForeground(new Color(150, 150, 150));
-        lblChonSuat.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        cboPhim = createStyledComboBox(220);
+        cboNgay = createStyledComboBox(140);
+        cboSuatChieu = createStyledComboBox(140);
         
-        cboSuatChieu = new JComboBox<>();
-        cboSuatChieu.setFont(new Font("Segoe UI", Font.BOLD, 15));
-        cboSuatChieu.setPreferredSize(new Dimension(420, 40));
-        cboSuatChieu.setUI(new BasicComboBoxUI());
-        cboSuatChieu.setBackground(new Color(40, 40, 40));
-        cboSuatChieu.setForeground(Color.WHITE);
-        
-        this.addComponentListener(new ComponentAdapter() {
-            @Override
-            public void componentShown(ComponentEvent e) { loadSCMoiNhat(); }
-        });
-        
-        pnlTopLeft.add(lblChonSuat);
-        pnlTopLeft.add(cboSuatChieu);
+        pnlFilters.add(taoWrapCombo("1. CHỌN PHIM:", cboPhim));
+        pnlFilters.add(taoWrapCombo("2. CHỌN NGÀY:", cboNgay));
+        pnlFilters.add(taoWrapCombo("3. CHỌN SUẤT:", cboSuatChieu));
 
+        // Box Khách hàng bên phải
         JPanel pnlTopRight = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 0));
         pnlTopRight.setOpaque(false);
         
-        JLabel lblKhachHang = new JLabel("MÃ THẺ KHÁCH HÀNG:");
-        lblKhachHang.setForeground(new Color(150, 150, 150));
-        lblKhachHang.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        
         txtMaKH = new JTextField();
-        txtMaKH.setPreferredSize(new Dimension(150, 40));
+        txtMaKH.setPreferredSize(new Dimension(180, 40));
         txtMaKH.setFont(new Font("Segoe UI", Font.BOLD, 18));
         txtMaKH.setBackground(new Color(40, 40, 40));
         txtMaKH.setForeground(new Color(212, 175, 55)); 
@@ -149,10 +149,9 @@ public class PNL_BanVe extends JPanel implements ActionListener {
             new EmptyBorder(5, 5, 5, 5)
         ));
 
-        pnlTopRight.add(lblKhachHang);
-        pnlTopRight.add(txtMaKH);
+        pnlTopRight.add(taoWrapCombo("MÃ KHÁCH HÀNG (QUẸT THẺ):", txtMaKH));
 
-        pnlTop.add(pnlTopLeft, BorderLayout.WEST);
+        pnlTop.add(pnlFilters, BorderLayout.WEST);
         pnlTop.add(pnlTopRight, BorderLayout.EAST);
         add(pnlTop, BorderLayout.NORTH);
 
@@ -259,7 +258,7 @@ public class PNL_BanVe extends JPanel implements ActionListener {
         pnlActionBtns.setOpaque(false);
         
         btnHuy = new PosButton("HỦY BỎ", new Color(100, 100, 100), Color.WHITE);
-        btnThanhToan = new PosButton("THANH TOÁN", new Color(229, 9, 20), Color.WHITE); // Đổi nút thanh toán sang Đỏ Netflix
+        btnThanhToan = new PosButton("THANH TOÁN", new Color(229, 9, 20), Color.WHITE); 
         
         pnlActionBtns.add(btnHuy);
         pnlActionBtns.add(btnThanhToan);
@@ -268,13 +267,62 @@ public class PNL_BanVe extends JPanel implements ActionListener {
         pnlRight.add(pnlCheckout, BorderLayout.SOUTH);
         add(pnlRight, BorderLayout.EAST);
 
-        // Events
+        // =========================================
+        // EVENTS
+        // =========================================
         btnThanhToan.addActionListener(this);
         btnHuy.addActionListener(this);
-        cboSuatChieu.addActionListener(e -> loadGheTheoSuat()); 
+        
+        // Khi mở tab này lên thì load dữ liệu
+        this.addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentShown(ComponentEvent e) { loadDuLieuVaoBoNho(); }
+        });
+    }
+
+    // =========================================================================
+    // HÀM TIỆN ÍCH GIAO DIỆN
+    // =========================================================================
+    private JComboBox<String> createStyledComboBox(int width) {
+        JComboBox<String> cbo = new JComboBox<>();
+        cbo.setFont(new Font("Segoe UI", Font.BOLD, 15));
+        cbo.setPreferredSize(new Dimension(width, 40));
+        cbo.setUI(new BasicComboBoxUI());
+        cbo.setBackground(new Color(40, 40, 40));
+        cbo.setForeground(Color.WHITE);
+        return cbo;
+    }
+
+    private JPanel taoWrapCombo(String title, JComponent comp) {
+        JPanel pnl = new JPanel(new BorderLayout(0, 5));
+        pnl.setOpaque(false);
+        JLabel lbl = new JLabel(title);
+        lbl.setForeground(new Color(150, 150, 150));
+        lbl.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        pnl.add(lbl, BorderLayout.NORTH);
+        pnl.add(comp, BorderLayout.CENTER);
+        return pnl;
+    }
+
+    private JPanel createLegend(Color c, String text) {
+        JPanel p = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+        p.setOpaque(false);
+        JLabel lblColor = new JLabel();
+        lblColor.setPreferredSize(new Dimension(18, 18));
+        lblColor.setOpaque(true);
+        lblColor.setBackground(c);
+        lblColor.setBorder(BorderFactory.createLineBorder(new Color(100, 100, 100), 1));
+        JLabel lblText = new JLabel(text);
+        lblText.setForeground(Color.LIGHT_GRAY);
+        lblText.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        p.add(lblColor);
+        p.add(lblText);
+        return p;
     }
 
     private void taoSoDoGheChuyenNghiep() {
+        pnlSeatMap.removeAll();
+        listGhế.clear();
         String[] hang = {"A", "B", "C", "D", "E", "F"};
         for (int i = 0; i < hang.length; i++) {
             int gheSo = 1;
@@ -297,6 +345,141 @@ public class PNL_BanVe extends JPanel implements ActionListener {
                 }
             }
         }
+        pnlSeatMap.revalidate();
+        pnlSeatMap.repaint();
+    }
+
+    // =========================================================================
+    // LOGIC LOAD DỮ LIỆU CASCADING (CHỌN LỌC DÂY CHUYỀN)
+    // =========================================================================
+    private void xoaSuKienCombo() {
+        for(ActionListener al : cboPhim.getActionListeners()) cboPhim.removeActionListener(al);
+        for(ActionListener al : cboNgay.getActionListeners()) cboNgay.removeActionListener(al);
+        for(ActionListener al : cboSuatChieu.getActionListeners()) cboSuatChieu.removeActionListener(al);
+    }
+    
+    private void themSuKienCombo() {
+        cboPhim.addActionListener(e -> loadNgayTheoPhim());
+        cboNgay.addActionListener(e -> loadSuatTheoNgay());
+        cboSuatChieu.addActionListener(e -> loadGheTheoSuat());
+    }
+
+    private void loadDuLieuVaoBoNho() {
+        try {
+            dsPhimAll = phimDAO.docTuBang();
+            dsSuatChieuAll = suatChieuDAO.docTuBang();
+            
+            xoaSuKienCombo(); // Ngắt sự kiện tạm thời
+            
+            cboPhim.removeAllItems();
+            for (Phim p : dsPhimAll) {
+                cboPhim.addItem(p.getTenPhim());
+            }
+            
+            themSuKienCombo();
+            
+            if(cboPhim.getItemCount() > 0) {
+                cboPhim.setSelectedIndex(0);
+                loadNgayTheoPhim(); // Tự động load ngày của phim đầu tiên
+            }
+        } catch (Exception e) {
+            System.out.println("Lỗi tải dữ liệu: " + e.getMessage());
+        }
+    }
+
+    private void loadNgayTheoPhim() {
+        xoaSuKienCombo();
+        cboNgay.removeAllItems();
+        cboSuatChieu.removeAllItems();
+        
+        if (cboPhim.getSelectedIndex() != -1) {
+            String tenPhim = cboPhim.getSelectedItem().toString();
+            String maPhimChon = "";
+            
+            for(Phim p : dsPhimAll) {
+                if(p.getTenPhim().equals(tenPhim)) {
+                    maPhimChon = p.getMaPhim();
+                    giaVeHienTai = p.getGiaVe(); 
+                    break;
+                }
+            }
+            
+            ArrayList<String> uniqueDates = new ArrayList<>();
+            DateTimeFormatter dtfNgay = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+            
+            for(SuatChieu sc : dsSuatChieuAll) {
+                if(sc.getMaPhim().equals(maPhimChon)) {
+                    String ngayStr = sc.getNgayChieu().format(dtfNgay);
+                    if(!uniqueDates.contains(ngayStr)) {
+                        uniqueDates.add(ngayStr);
+                        cboNgay.addItem(ngayStr);
+                    }
+                }
+            }
+        }
+        themSuKienCombo();
+        
+        if(cboNgay.getItemCount() > 0) {
+            cboNgay.setSelectedIndex(0);
+            loadSuatTheoNgay();
+        } else {
+            resetSoDoGhe();
+        }
+    }
+
+    private void loadSuatTheoNgay() {
+        xoaSuKienCombo();
+        cboSuatChieu.removeAllItems();
+        
+        if (cboPhim.getSelectedIndex() != -1 && cboNgay.getSelectedIndex() != -1) {
+            String tenPhim = cboPhim.getSelectedItem().toString();
+            String maPhimChon = "";
+            for(Phim p : dsPhimAll) if(p.getTenPhim().equals(tenPhim)) maPhimChon = p.getMaPhim();
+            
+            String ngayChon = cboNgay.getSelectedItem().toString();
+            DateTimeFormatter dtfNgay = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+            DateTimeFormatter dtfGio = DateTimeFormatter.ofPattern("HH:mm");
+            
+            for(SuatChieu sc : dsSuatChieuAll) {
+                if(sc.getMaPhim().equals(maPhimChon) && sc.getNgayChieu().format(dtfNgay).equals(ngayChon)) {
+                    // Định dạng: Mã Suất - HH:mm (Tên Phòng)
+                    String hienThi = sc.getMaSuat() + " - " + sc.getGioChieu().format(dtfGio) + " (" + sc.getPhongChieu() + ")";
+                    cboSuatChieu.addItem(hienThi);
+                }
+            }
+        }
+        themSuKienCombo();
+        
+        if(cboSuatChieu.getItemCount() > 0) {
+            cboSuatChieu.setSelectedIndex(0);
+            loadGheTheoSuat();
+        } else {
+            resetSoDoGhe();
+        }
+    }
+
+    private void loadGheTheoSuat() {
+        resetSoDoGhe();
+        if (cboSuatChieu.getSelectedIndex() == -1) return;
+        
+        String suatDangChon = cboSuatChieu.getSelectedItem().toString();
+        String maSuat = suatDangChon.split(" - ")[0]; 
+
+        ArrayList<String> gheDaBan = hoaDonDAO.layDanhSachGheDaBan(maSuat);
+        for (SeatButton btn : listGhế) {
+            if (gheDaBan.contains(btn.getText())) {
+                btn.setEnabled(false); 
+            }
+        }
+    }
+
+    private void resetSoDoGhe() {
+        for (SeatButton btn : listGhế) {
+            btn.setSelected(false);
+            btn.setEnabled(true);
+        }
+        gheDangChon.clear();
+        capNhatGioHang();
     }
 
     private void capNhatGioHang() {
@@ -306,7 +489,7 @@ public class PNL_BanVe extends JPanel implements ActionListener {
         
         for (String ghe : gheDangChon) {
             String loaiGhe = ghe.startsWith("F") ? "VIP" : "Thường";
-            double giaGheNay = ghe.startsWith("F") ? 120000 : giaVeHienTai;
+            double giaGheNay = ghe.startsWith("F") ? giaVeHienTai + 20000 : giaVeHienTai; // Ghế VIP phụ thu thêm tiền
             
             cartModel.addRow(new Object[]{loaiGhe, ghe, nf.format(giaGheNay)});
             tongTien += giaGheNay;
@@ -314,69 +497,6 @@ public class PNL_BanVe extends JPanel implements ActionListener {
         
         lblSoLuong.setText("Số lượng vé: " + gheDangChon.size());
         lblTongTien.setText(nf.format(tongTien) + " đ");
-    }
-
-    private void loadGheTheoSuat() {
-        for (SeatButton btn : listGhế) {
-            btn.setSelected(false);
-            btn.setEnabled(true);
-        }
-        gheDangChon.clear();
-        capNhatGioHang();
-
-        if (cboSuatChieu.getSelectedItem() == null) return;
-        String suatDangChon = cboSuatChieu.getSelectedItem().toString();
-        String maSuat = suatDangChon.split(" - ")[0]; 
-
-        ArrayList<String> gheDaBan = hoaDonDAO.layDanhSachGheDaBan(maSuat);
-
-        for (SeatButton btn : listGhế) {
-            if (gheDaBan.contains(btn.getText())) {
-                btn.setEnabled(false); 
-            }
-        }
-    }
-    
-    private void loadSCMoiNhat() {
-        ActionListener[] listeners = cboSuatChieu.getActionListeners();
-        for (ActionListener l : listeners) cboSuatChieu.removeActionListener(l);
-        
-        cboSuatChieu.removeAllItems();
-        ArrayList<entity.SuatChieu> dsSuat = suatChieuDAO.docTuBang();
-        
-        DateTimeFormatter dtfNgay = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-        DateTimeFormatter dtfGio = DateTimeFormatter.ofPattern("HH:mm");
-        
-        for (entity.SuatChieu s : dsSuat) {
-            String hienThi = s.getMaSuat() + " - " + s.getMaPhim() + " - " + s.getPhongChieu() + " - " 
-                           + s.getGioChieu().format(dtfGio) + " ngày " + s.getNgayChieu().format(dtfNgay);
-            cboSuatChieu.addItem(hienThi);
-        }
-        
-        for (ActionListener l : listeners) cboSuatChieu.addActionListener(l);
-        
-        if(cboSuatChieu.getItemCount() > 0) {
-            cboSuatChieu.setSelectedIndex(0);
-            loadGheTheoSuat();
-        }
-    }
-
-    private JPanel createLegend(Color c, String text) {
-        JPanel p = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
-        p.setOpaque(false);
-        JLabel lblColor = new JLabel();
-        lblColor.setPreferredSize(new Dimension(18, 18));
-        lblColor.setOpaque(true);
-        lblColor.setBackground(c);
-        lblColor.setBorder(BorderFactory.createLineBorder(new Color(100, 100, 100), 1));
-        
-        JLabel lblText = new JLabel(text);
-        lblText.setForeground(Color.LIGHT_GRAY);
-        lblText.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        
-        p.add(lblColor);
-        p.add(lblText);
-        return p;
     }
 
     // =========================================================================
@@ -394,7 +514,7 @@ public class PNL_BanVe extends JPanel implements ActionListener {
             sb.append("Thẻ Khách hàng: ").append(maKH).append("\n");
         }
         sb.append("------------------------------------------\n");
-        sb.append("Suất chiếu: \n").append(suatInfo).append("\n");
+        sb.append("Chi tiết: \n").append(suatInfo).append("\n"); // In rõ Phim, Ngày, Suất
         sb.append("Vị trí ghế: ").append(String.join(", ", gheDangChon)).append("\n");
         sb.append("Số lượng:   ").append(gheDangChon.size()).append(" vé\n");
         sb.append("------------------------------------------\n");
@@ -404,7 +524,7 @@ public class PNL_BanVe extends JPanel implements ActionListener {
         sb.append("        Wifi: Cinema_Free (Pass: 8888)    \n");
 
         JTextArea txtBill = new JTextArea(sb.toString());
-        txtBill.setFont(new Font("Monospaced", Font.BOLD, 13)); // Dùng font Monospaced để căn lề chuẩn
+        txtBill.setFont(new Font("Monospaced", Font.BOLD, 13)); 
         txtBill.setEditable(false);
         txtBill.setBackground(Color.WHITE);
         txtBill.setForeground(Color.BLACK);
@@ -413,14 +533,12 @@ public class PNL_BanVe extends JPanel implements ActionListener {
         JScrollPane scroll = new JScrollPane(txtBill);
         scroll.setPreferredSize(new Dimension(380, 450));
 
-        // Hiện Dialog giả lập hóa đơn và hỏi in
         Object[] options = {"In Hóa Đơn (Print)", "Đóng lại"};
         int choice = JOptionPane.showOptionDialog(this, scroll, "Chi tiết Hóa Đơn: " + maHD,
                 JOptionPane.YES_NO_OPTION, JOptionPane.PLAIN_MESSAGE, null, options, options[0]);
 
         if (choice == JOptionPane.YES_OPTION) {
             try {
-                // Kích hoạt hộp thoại in của Windows
                 boolean complete = txtBill.print();
                 if (complete) {
                     JOptionPane.showMessageDialog(this, "Đã gửi lệnh in thành công!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
@@ -436,17 +554,26 @@ public class PNL_BanVe extends JPanel implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() == btnHuy) {
-            loadGheTheoSuat(); 
+            resetSoDoGhe(); 
             txtMaKH.setText(""); 
         } else if (e.getSource() == btnThanhToan) {
             if (gheDangChon.isEmpty()) {
                 JOptionPane.showMessageDialog(this, "Vui lòng chọn ít nhất 1 ghế!");
                 return;
             }
+            if (cboSuatChieu.getSelectedIndex() == -1) {
+                JOptionPane.showMessageDialog(this, "Vui lòng chọn suất chiếu hợp lệ!");
+                return;
+            }
             
             String maHD = "HD" + new SimpleDateFormat("HHmmss").format(new Date());
-            String suatInfo = cboSuatChieu.getSelectedItem().toString();
-            String maSuat = suatInfo.split(" - ")[0]; 
+            
+            // Lấy chuỗi hiển thị tổng hợp cho hóa đơn
+            String suatInfo = cboPhim.getSelectedItem().toString() + "\n" 
+                            + "Ngày: " + cboNgay.getSelectedItem().toString() + "\n"
+                            + "Suất: " + cboSuatChieu.getSelectedItem().toString();
+                            
+            String maSuat = cboSuatChieu.getSelectedItem().toString().split(" - ")[0]; 
             String maKH = txtMaKH.getText().trim();
             
             if (!maKH.isEmpty()) {
@@ -475,12 +602,11 @@ public class PNL_BanVe extends JPanel implements ActionListener {
                     }
                     JOptionPane.showMessageDialog(this, loiChuc, "Thành công", JOptionPane.INFORMATION_MESSAGE);
                     
-                    // GỌI HÀM IN HÓA ĐƠN VỪA TẠO
                     String tongTienStr = lblTongTien.getText();
                     inHoaDon(maHD, suatInfo, maKH, tongTienStr);
                     
                     txtMaKH.setText("");
-                    loadGheTheoSuat();
+                    loadGheTheoSuat(); // Cập nhật lại sơ đồ ghế lập tức
                 } else {
                     JOptionPane.showMessageDialog(this, "Lỗi kết nối CSDL, thanh toán thất bại!", "Lỗi hệ thống", JOptionPane.ERROR_MESSAGE);
                 }
