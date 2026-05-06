@@ -101,15 +101,15 @@ public class PhimDAO {
     // 5. Hàm lấy top phim (Giữ nguyên của bạn)
     public List<TopPhim> getTop3PhimHomNay() {
         List<TopPhim> list = new ArrayList<>();
-
         try {
-            Connection con = Database.getInstance().getConnection();
-
-            String sql =
-                "SELECT TOP 3 p.TenPhim, SUM(ct.SoLuong) AS SoVeBan " +
-                "FROM ChiTietHoaDon ct " +
-                "JOIN Phim p ON p.MaPhim = ct.MaPhim " +
-                "JOIN HoaDon hd ON hd.MaHD = ct.MaHD " +
+            Connection con = connect.Database.getInstance().getConnection();
+            // Nối qua 4 bảng để đếm chính xác số lượng vé bán ra trong ngày
+            String sql = 
+                "SELECT TOP 3 p.TenPhim, COUNT(v.MaVe) AS SoVeBan " +
+                "FROM VePhim v " +
+                "JOIN SuatChieu s ON v.MaSuat = s.MaSuat " +
+                "JOIN Phim p ON s.MaPhim = p.MaPhim " +
+                "JOIN HoaDon hd ON v.MaHD = hd.MaHD " +
                 "WHERE CAST(hd.NgayLap AS DATE) = CAST(GETDATE() AS DATE) " +
                 "GROUP BY p.TenPhim " +
                 "ORDER BY SoVeBan DESC";
@@ -123,11 +123,9 @@ public class PhimDAO {
                     rs.getInt("SoVeBan")
                 ));
             }
-
         } catch (Exception e) {
             e.printStackTrace();
         }
-
         return list;
     }
     // =========================================================

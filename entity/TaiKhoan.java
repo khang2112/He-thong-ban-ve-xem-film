@@ -20,7 +20,8 @@ public class TaiKhoan {
 	public void setTenDangNhap(String tenDangNhap) {
 		this.tenDangNhap = tenDangNhap;
 	}
-
+	public TaiKhoan() {
+    }
 	public String getMatKhau() {
 		return matKhau;
 	}
