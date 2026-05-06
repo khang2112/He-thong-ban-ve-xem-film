@@ -20,19 +20,18 @@ public class PNL_KhachHang extends JPanel implements ActionListener, MouseListen
     
     private KhachHangDAO khachHangDAO;
 
-    // --- BẢNG MÀU CHỦ ĐỀ ĐỎ (NETFLIX / CGV THEME) ---
     private Color bgDark = new Color(18, 18, 18);
     private Color bgPanel = new Color(30, 30, 30);
     private Color textWhite = new Color(240, 240, 240);
     private Color themeRed = new Color(229, 9, 20); 
-    private Color colorGold = new Color(212, 175, 55); // Dùng cho Điểm tích lũy
+    private Color colorGold = new Color(212, 175, 55); 
 
-    // --- LỚP NÚT BẤM CAO CẤP CHỐNG LỖI WINDOWS UI ---
     class PosButton extends JButton {
         private Color bgColor;
         public PosButton(String text, Color bg, Color fg) {
             super(text);
             this.bgColor = bg;
+            setBackground(bg); // FIX: HIỂN THỊ MÀU NGAY KHI LOAD
             setFont(new Font("Segoe UI", Font.BOLD, 14));
             setForeground(fg);
             setFocusPainted(false);
@@ -64,9 +63,6 @@ public class PNL_KhachHang extends JPanel implements ActionListener, MouseListen
         setBackground(bgDark);
         setBorder(new EmptyBorder(15, 20, 20, 20));
 
-        // ==========================================
-        // 1. FORM NHẬP LIỆU
-        // ==========================================
         JPanel pnlTop = new JPanel(new BorderLayout(0, 15));
         pnlTop.setOpaque(false);
 
@@ -100,15 +96,12 @@ public class PNL_KhachHang extends JPanel implements ActionListener, MouseListen
         txtDiem = createTextField();
         txtDiem.setText("0"); 
         txtDiem.setEditable(false); 
-        txtDiem.setForeground(colorGold); // Chữ vàng gold cho điểm
+        txtDiem.setForeground(colorGold); 
         txtDiem.setFont(new Font("Segoe UI", Font.BOLD, 16));
         pnlInput.add(txtDiem);
 
         pnlTop.add(pnlInputWrapper, BorderLayout.CENTER);
 
-        // ==========================================
-        // 2. NÚT CHỨC NĂNG
-        // ==========================================
         JPanel pnlBtns = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 0));
         pnlBtns.setOpaque(false);
         
@@ -125,9 +118,6 @@ public class PNL_KhachHang extends JPanel implements ActionListener, MouseListen
         pnlTop.add(pnlBtns, BorderLayout.SOUTH);
         add(pnlTop, BorderLayout.NORTH);
 
-        // ==========================================
-        // 3. BẢNG DỮ LIỆU
-        // ==========================================
         JPanel pnlTableWrapper = new JPanel(new BorderLayout());
         pnlTableWrapper.setBackground(bgPanel);
         pnlTableWrapper.setBorder(BorderFactory.createCompoundBorder(
@@ -150,7 +140,6 @@ public class PNL_KhachHang extends JPanel implements ActionListener, MouseListen
         table.setSelectionForeground(Color.WHITE);
         table.setShowGrid(false); 
 
-        // Custom Header
         DefaultTableCellRenderer headerRenderer = new DefaultTableCellRenderer();
         headerRenderer.setBackground(new Color(20, 20, 20));
         headerRenderer.setForeground(themeRed);
@@ -160,12 +149,10 @@ public class PNL_KhachHang extends JPanel implements ActionListener, MouseListen
             table.getColumnModel().getColumn(i).setHeaderRenderer(headerRenderer);
         }
 
-        // Căn giữa Số Điện Thoại và Điểm
         DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
         centerRenderer.setHorizontalAlignment(JLabel.CENTER);
         table.getColumnModel().getColumn(2).setCellRenderer(centerRenderer);
         
-        // Custom riêng cột Điểm cho màu vàng
         DefaultTableCellRenderer goldRenderer = new DefaultTableCellRenderer();
         goldRenderer.setHorizontalAlignment(JLabel.CENTER);
         goldRenderer.setForeground(colorGold);
@@ -179,7 +166,6 @@ public class PNL_KhachHang extends JPanel implements ActionListener, MouseListen
         pnlTableWrapper.add(scrollPane, BorderLayout.CENTER);
         add(pnlTableWrapper, BorderLayout.CENTER);
 
-        // Đăng ký sự kiện
         btnThem.addActionListener(this);
         btnSua.addActionListener(this);
         btnXoa.addActionListener(this);
@@ -189,7 +175,6 @@ public class PNL_KhachHang extends JPanel implements ActionListener, MouseListen
         loadDataToTable();
     }
 
-    // --- CÁC HÀM HỖ TRỢ GIAO DIỆN ---
     private JLabel createLabel(String text) {
         JLabel lbl = new JLabel(text, SwingConstants.RIGHT);
         lbl.setForeground(new Color(180, 180, 180));
@@ -210,9 +195,6 @@ public class PNL_KhachHang extends JPanel implements ActionListener, MouseListen
         return txt;
     }
 
-    // ========================================================
-    // HÀM KIỂM TRA RÀNG BUỘC DỮ LIỆU (VALIDATION)
-    // ========================================================
     private boolean validateData() {
         String ma = txtMa.getText().trim();
         String ten = txtTen.getText().trim();
@@ -240,7 +222,6 @@ public class PNL_KhachHang extends JPanel implements ActionListener, MouseListen
         return true; 
     }
 
-    // --- HÀM LOAD DỮ LIỆU TỪ SQL ---
     public void loadDataToTable() {
         model.setRowCount(0);
         ArrayList<KhachHang> ds = khachHangDAO.docTuBang();
@@ -251,7 +232,6 @@ public class PNL_KhachHang extends JPanel implements ActionListener, MouseListen
         }
     }
 
-    // --- XỬ LÝ SỰ KIỆN NÚT BẤM ---
     @Override
     public void actionPerformed(ActionEvent e) {
         Object o = e.getSource();
@@ -319,7 +299,6 @@ public class PNL_KhachHang extends JPanel implements ActionListener, MouseListen
         }
     }
 
-    // --- SỰ KIỆN CLICK VÀO BẢNG ---
     @Override
     public void mouseClicked(MouseEvent e) {
         int row = table.getSelectedRow();
@@ -330,7 +309,7 @@ public class PNL_KhachHang extends JPanel implements ActionListener, MouseListen
             txtDiem.setText(model.getValueAt(row, 3).toString());
             
             txtMa.setEditable(false); 
-            txtMa.setBackground(new Color(60, 60, 60)); // Làm tối màu báo hiệu bị khóa
+            txtMa.setBackground(new Color(60, 60, 60)); 
         }
     }
     @Override public void mousePressed(MouseEvent e) {}

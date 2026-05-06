@@ -10,7 +10,6 @@ import java.util.ArrayList;
 
 public class NhanVienDAO {
     
-    // Đọc danh sách từ SQL
     public ArrayList<NhanVien> docTuBang() {
         ArrayList<NhanVien> dsNV = new ArrayList<>();
         try {
@@ -34,13 +33,13 @@ public class NhanVienDAO {
         return dsNV;
     }
 
-    // Thêm nhân viên
     public boolean themNhanVien(NhanVien nv) {
         Connection con = Database.getInstance().getConnection();
         PreparedStatement stmt = null;
         int n = 0;
         try {
-            String sql = "INSERT INTO NhanVien VALUES(?, ?, ?, ?, ?, ?)";
+            // FIX: Ghi rõ tên cột
+            String sql = "INSERT INTO NhanVien (MaNV, HoNV, TenNV, Tuoi, PhongBan, TienLuong) VALUES(?, ?, ?, ?, ?, ?)";
             stmt = con.prepareStatement(sql);
             stmt.setString(1, nv.getMaNV());
             stmt.setString(2, nv.getHoNV());
@@ -55,7 +54,6 @@ public class NhanVienDAO {
         return n > 0;
     }
 
-    // Xóa nhân viên
     public boolean xoaNhanVien(String maNV) {
         Connection con = Database.getInstance().getConnection();
         PreparedStatement stmt = null;
@@ -71,7 +69,6 @@ public class NhanVienDAO {
         return n > 0;
     }
 
-    // Sửa nhân viên
     public boolean suaNhanVien(NhanVien nv) {
         Connection con = Database.getInstance().getConnection();
         PreparedStatement stmt = null;
@@ -96,11 +93,10 @@ public class NhanVienDAO {
         ArrayList<NhanVien> ds = new ArrayList<>();
         try {
             Connection con = Database.getInstance().getConnection();
-            // Sử dụng LIKE để tìm kiếm gần đúng (chứa từ khóa là tìm được)
             String sql = "SELECT * FROM NhanVien WHERE MaNV LIKE ? OR TenNV LIKE ? OR HoNV LIKE ?";
             PreparedStatement pst = con.prepareStatement(sql);
             
-            String pattern = "%" + tuKhoa + "%"; // Thêm dấu % ở 2 đầu cho lệnh LIKE
+            String pattern = "%" + tuKhoa + "%"; 
             pst.setString(1, pattern);
             pst.setString(2, pattern);
             pst.setString(3, pattern);

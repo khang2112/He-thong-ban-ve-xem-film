@@ -4,6 +4,8 @@ import dao.HoaDonDAO;
 import entity.HoaDon;
 import entity.VePhim;
 import java.awt.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.text.NumberFormat;
@@ -11,7 +13,6 @@ import java.util.ArrayList;
 import java.util.Locale;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import javax.swing.border.LineBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
@@ -50,12 +51,11 @@ public class PNL_HoaDon extends JPanel implements MouseListener {
         String[] colsHD = {"Mã Hóa Đơn", "Nhân Viên Lập", "Ngày Lập", "Tổng Tiền"};
         modelHoaDon = new DefaultTableModel(colsHD, 0) {
             @Override
-            public boolean isCellEditable(int row, int column) { return false; } // Khóa không cho sửa
+            public boolean isCellEditable(int row, int column) { return false; } 
         };
         tblHoaDon = new JTable(modelHoaDon);
         setupTableStyle(tblHoaDon);
 
-        // Căn lề phải cho cột Tiền
         DefaultTableCellRenderer rightRenderer = new DefaultTableCellRenderer();
         rightRenderer.setHorizontalAlignment(JLabel.RIGHT);
         tblHoaDon.getColumnModel().getColumn(3).setCellRenderer(rightRenderer);
@@ -87,7 +87,7 @@ public class PNL_HoaDon extends JPanel implements MouseListener {
         tblChiTiet = new JTable(modelChiTiet);
         setupTableStyle(tblChiTiet);
 
-        tblChiTiet.getColumnModel().getColumn(3).setCellRenderer(rightRenderer); // Căn lề phải giá vé
+        tblChiTiet.getColumnModel().getColumn(3).setCellRenderer(rightRenderer); 
 
         JScrollPane scrollCT = new JScrollPane(tblChiTiet);
         scrollCT.getViewport().setBackground(bgPanel);
@@ -96,14 +96,20 @@ public class PNL_HoaDon extends JPanel implements MouseListener {
         pnlBottom.add(scrollCT, BorderLayout.CENTER);
         add(pnlBottom, BorderLayout.CENTER);
 
-        // Đăng ký sự kiện click chuột
         tblHoaDon.addMouseListener(this);
         
-        // Tải dữ liệu ban đầu
+        // --- FIX: GẮN CẢM BIẾN TỰ ĐỘNG CẬP NHẬT KHI MỞ TAB ---
+        this.addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentShown(ComponentEvent e) {
+                loadDataHoaDon(); // Quét Hóa đơn mới nhất
+                modelChiTiet.setRowCount(0); // Làm sạch bảng chi tiết cũ
+            }
+        });
+
         loadDataHoaDon();
     }
 
-    // --- HÀM ÉP KIỂU BẢNG SANG DARK MODE - RED NETFLIX ---
     private void setupTableStyle(JTable table) {
         table.setRowHeight(35);
         table.setBackground(bgPanel);
@@ -124,14 +130,12 @@ public class PNL_HoaDon extends JPanel implements MouseListener {
         }
     }
 
-    // --- HÀM LOAD DANH SÁCH HÓA ĐƠN TỪ CSDL ---
     public void loadDataHoaDon() {
         modelHoaDon.setRowCount(0);
         ArrayList<HoaDon> dsHD = hoaDonDAO.layDanhSachHoaDon();
         NumberFormat nf = NumberFormat.getInstance(new Locale("vi", "VN"));
 
         for (HoaDon hd : dsHD) {
-            // Cắt bớt đuôi mili-giây của Ngày Lập nếu có
             String ngayLap = hd.getNgayLap();
             if (ngayLap != null && ngayLap.length() >= 19) {
                 ngayLap = ngayLap.substring(0, 19);
@@ -146,13 +150,12 @@ public class PNL_HoaDon extends JPanel implements MouseListener {
         }
     }
 
-    // --- SỰ KIỆN CLICK CHỌN 1 HÓA ĐƠN SẼ HIỂN THỊ CHI TIẾT VÉ ---
     @Override
     public void mouseClicked(MouseEvent e) {
         int row = tblHoaDon.getSelectedRow();
         if (row != -1) {
             String maHD = modelHoaDon.getValueAt(row, 0).toString();
-            modelChiTiet.setRowCount(0); // Xóa bảng chi tiết cũ
+            modelChiTiet.setRowCount(0); 
             
             ArrayList<VePhim> dsVe = hoaDonDAO.layChiTietVe(maHD);
             NumberFormat nf = NumberFormat.getInstance(new Locale("vi", "VN"));

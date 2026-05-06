@@ -2,7 +2,6 @@ package dao;
 
 import connect.Database;
 import entity.TaiKhoan;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -23,7 +22,7 @@ public class TaiKhoanDAO {
                 tk.setTenDangNhap(rs.getString("TenDangNhap"));
                 tk.setMatKhau(rs.getString("MatKhau"));
                 tk.setHoTen(rs.getString("HoTen"));
-                // Đã gỡ bỏ dòng rs.getString("VaiTro") để bảo vệ Database
+                tk.setVaiTro(rs.getString("VaiTro")); // PHỤC HỒI ĐỂ PHÂN QUYỀN
             }
         } catch (Exception e) {
             e.printStackTrace();

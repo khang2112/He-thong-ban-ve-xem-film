@@ -5,7 +5,6 @@ import java.awt.event.*;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -18,9 +17,9 @@ import javax.swing.table.DefaultTableModel;
 import com.toedter.calendar.JDateChooser;
 import com.toedter.calendar.JTextFieldDateEditor;
 
-// IMPORT DAO VÀ ENTITY (Nhớ đảm bảo đúng tên package của bạn)
 import dao.SuatChieuDAO;
 import entity.SuatChieu;
+import entity.Phim;
 
 public class PNL_SuatChieu extends JPanel implements ActionListener, MouseListener {
 	private JTextField txtMaSuat;
@@ -35,22 +34,19 @@ public class PNL_SuatChieu extends JPanel implements ActionListener, MouseListen
 	private DefaultTableModel model;
 	private JTable table;
 
-	// KHỞI TẠO DAO
 	private SuatChieuDAO suatChieuDAO;
 
-	// --- BẢNG MÀU CHỦ ĐỀ ĐỎ (NETFLIX / CGV THEME) ---
 	private Color bgDark = new Color(18, 18, 18);
 	private Color bgPanel = new Color(30, 30, 30);
 	private Color textWhite = new Color(240, 240, 240);
 	private Color themeRed = new Color(229, 9, 20);
 
-	// --- LỚP NÚT BẤM CAO CẤP ---
 	class PosButton extends JButton {
 		private Color bgColor;
-
 		public PosButton(String text, Color bg, Color fg) {
 			super(text);
 			this.bgColor = bg;
+			setBackground(bg); 
 			setFont(new Font("Segoe UI", Font.BOLD, 14));
 			setForeground(fg);
 			setFocusPainted(false);
@@ -60,15 +56,8 @@ public class PNL_SuatChieu extends JPanel implements ActionListener, MouseListen
 			setPreferredSize(new Dimension(120, 40));
 
 			addMouseListener(new MouseAdapter() {
-				public void mouseEntered(MouseEvent e) {
-					setBackground(bgColor.brighter());
-					repaint();
-				}
-
-				public void mouseExited(MouseEvent e) {
-					setBackground(bgColor);
-					repaint();
-				}
+				public void mouseEntered(MouseEvent e) { setBackground(bgColor.brighter()); repaint(); }
+				public void mouseExited(MouseEvent e) { setBackground(bgColor); repaint(); }
 			});
 		}
 
@@ -85,8 +74,7 @@ public class PNL_SuatChieu extends JPanel implements ActionListener, MouseListen
 
 	public PNL_SuatChieu(UI_TrangChu ui_TrangChu) {
 		this.ui_TrangChu = ui_TrangChu;
-		
-		suatChieuDAO = new SuatChieuDAO(); // Nạp kết nối CSDL
+		suatChieuDAO = new SuatChieuDAO(); 
 		phimDAO = new dao.PhimDAO();      
         hoaDonDAO = new dao.HoaDonDAO();
 		
@@ -94,9 +82,6 @@ public class PNL_SuatChieu extends JPanel implements ActionListener, MouseListen
 		setBackground(bgDark);
 		setBorder(new EmptyBorder(15, 20, 20, 20));
 
-		// ==========================================
-		// 1. FORM NHẬP LIỆU (NORTH)
-		// ==========================================
 		JPanel pnlTop = new JPanel(new BorderLayout(0, 15));
 		pnlTop.setOpaque(false);
 
@@ -113,20 +98,14 @@ public class PNL_SuatChieu extends JPanel implements ActionListener, MouseListen
 		pnlInputWrapper.setBorder(border);
 		pnlInputWrapper.add(pnlInput, BorderLayout.CENTER);
 
-		// Hàng 1
 		pnlInput.add(createLabel("Mã Suất Chiếu:"));
 		txtMaSuat = createTextField();
 		pnlInput.add(txtMaSuat);
 
 		pnlInput.add(createLabel("Chọn Phim:"));
 		cboPhim = createComboBox();
-		// BẠN CÓ THỂ LÀM 1 HÀM LOAD DANH SÁCH PHIM TỪ PhimDAO VÀO ĐÂY
-		cboPhim.addItem("P001");
-		cboPhim.addItem("P002");
-		cboPhim.addItem("P003");
 		pnlInput.add(cboPhim);
 
-		// Hàng 2
 		pnlInput.add(createLabel("Phòng Chiếu:"));
 		cboPhong = createComboBox();
 		cboPhong.addItem("Phòng 1 (2D)");
@@ -140,17 +119,16 @@ public class PNL_SuatChieu extends JPanel implements ActionListener, MouseListen
 		
 		JTextFieldDateEditor dateEditor = (JTextFieldDateEditor) txtNgayChieu.getDateEditor();
 		dateEditor.setFont(new Font("Segoe UI", Font.PLAIN, 15));
-		dateEditor.setBackground(new Color(40, 40, 40)); // Nền xám đen
-		dateEditor.setForeground(Color.WHITE);           // Chữ trắng
-		dateEditor.setCaretColor(themeRed);              // Con trỏ chuột màu đỏ
+		dateEditor.setBackground(new Color(40, 40, 40)); 
+		dateEditor.setForeground(Color.WHITE);           
+		dateEditor.setCaretColor(themeRed);              
 		dateEditor.setBorder(BorderFactory.createCompoundBorder(
 				BorderFactory.createLineBorder(new Color(80, 80, 80)),
 				new EmptyBorder(5, 10, 5, 10)));
-		txtNgayChieu.setBackground(bgPanel); // Màu nền của cả JDateChooser
+		txtNgayChieu.setBackground(bgPanel); 
 		dateEditor.addPropertyChangeListener("foreground", e -> dateEditor.setForeground(Color.WHITE));
 		pnlInput.add(txtNgayChieu);
 
-		// Hàng 3
 		pnlInput.add(createLabel("Giờ Chiếu (HH:mm):"));
 		SpinnerDateModel timeModel = new SpinnerDateModel();
 		spnGioChieu = new JSpinner(timeModel);
@@ -160,20 +138,17 @@ public class PNL_SuatChieu extends JPanel implements ActionListener, MouseListen
 		
 		JFormattedTextField txtSpinner = timeEditor.getTextField();
 		txtSpinner.setFont(new Font("Segoe UI", Font.PLAIN, 15));
-		txtSpinner.setBackground(new Color(40, 40, 40)); // Nền xám đen
-		txtSpinner.setForeground(Color.WHITE);           // Chữ trắng
-		txtSpinner.setCaretColor(themeRed);              // Con trỏ chuột màu đỏ
-		txtSpinner.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10)); // Padding cho chữ
+		txtSpinner.setBackground(new Color(40, 40, 40)); 
+		txtSpinner.setForeground(Color.WHITE);           
+		txtSpinner.setCaretColor(themeRed);              
+		txtSpinner.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10)); 
 		
 		spnGioChieu.setBackground(new Color(40, 40, 40));
-		spnGioChieu.setBorder(BorderFactory.createLineBorder(new Color(80, 80, 80))); // Viền ngoài JSpinner
+		spnGioChieu.setBorder(BorderFactory.createLineBorder(new Color(80, 80, 80))); 
 		pnlInput.add(spnGioChieu);
 
 		pnlTop.add(pnlInputWrapper, BorderLayout.CENTER);
 
-		// ==========================================
-		// 2. NÚT CHỨC NĂNG
-		// ==========================================
 		JPanel pnlBtns = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 0));
 		pnlBtns.setOpaque(false);
 
@@ -192,9 +167,6 @@ public class PNL_SuatChieu extends JPanel implements ActionListener, MouseListen
 		pnlTop.add(pnlBtns, BorderLayout.SOUTH);
 		add(pnlTop, BorderLayout.NORTH);
 
-		// ==========================================
-		// 3. BẢNG DỮ LIỆU
-		// ==========================================
 		JPanel pnlTableWrapper = new JPanel(new BorderLayout());
 		pnlTableWrapper.setBackground(bgPanel);
 		pnlTableWrapper.setBorder(BorderFactory.createCompoundBorder(new LineBorder(new Color(60, 60, 60), 1),
@@ -203,9 +175,7 @@ public class PNL_SuatChieu extends JPanel implements ActionListener, MouseListen
 		String[] cols = { "Mã Suất", "Tên Phim", "Phòng Chiếu", "Ngày Chiếu", "Giờ Chiếu", "Trạng Thái Vé"};
 		model = new DefaultTableModel(cols, 0) {
 			@Override
-			public boolean isCellEditable(int row, int column) {
-				return false;
-			}
+			public boolean isCellEditable(int row, int column) { return false; }
 		};
 		table = new JTable(model);
 
@@ -238,7 +208,6 @@ public class PNL_SuatChieu extends JPanel implements ActionListener, MouseListen
 		pnlTableWrapper.add(scrollPane, BorderLayout.CENTER);
 		add(pnlTableWrapper, BorderLayout.CENTER);
 
-		// Đăng ký sự kiện
 		btnThem.addActionListener(this);
 		btnSua.addActionListener(this);
 		btnXoa.addActionListener(this);
@@ -246,11 +215,18 @@ public class PNL_SuatChieu extends JPanel implements ActionListener, MouseListen
 		table.addMouseListener(this);
 		btnDenBanVe.addActionListener(this);
 
-		// Gọi hàm load dữ liệu CSDL lên bảng
+		loadComboPhim();
 		loadDataToTable();
 	}
 
-	// --- CÁC HÀM HỖ TRỢ GIAO DIỆN ---
+	private void loadComboPhim() {
+	    cboPhim.removeAllItems();
+	    ArrayList<Phim> dsPhim = phimDAO.docTuBang();
+	    for (Phim p : dsPhim) {
+	        cboPhim.addItem(p.getMaPhim() + " - " + p.getTenPhim());
+	    }
+	}
+
 	private JLabel createLabel(String text) {
 		JLabel lbl = new JLabel(text, SwingConstants.RIGHT);
 		lbl.setForeground(new Color(180, 180, 180));
@@ -280,7 +256,6 @@ public class PNL_SuatChieu extends JPanel implements ActionListener, MouseListen
 		return cbo;
 	}
 
-	// --- HÀM LOAD DỮ LIỆU TỪ SQL ---
 	public void loadDataToTable() {
 		model.setRowCount(0);
 		try {
@@ -293,7 +268,7 @@ public class PNL_SuatChieu extends JPanel implements ActionListener, MouseListen
                     if(p.getMaPhim().equals(s.getMaPhim())) { tenPhim = p.getTenPhim(); break; }
                 }
                 
-                int tongGhe = 48; // Giả sử rạp bạn có 48 ghế
+                int tongGhe = 48; 
                 int gheDaBan = hoaDonDAO.layDanhSachGheDaBan(s.getMaSuat()).size();
                 int veCon = tongGhe - gheDaBan;
                 String trangThaiVe = veCon > 0 ? (veCon + "/" + tongGhe + " vé") : "HẾT VÉ";
@@ -307,11 +282,12 @@ public class PNL_SuatChieu extends JPanel implements ActionListener, MouseListen
 		}
 	}
 
-	// --- VALIDATE DỮ LIỆU ---
 	private boolean validData() {
 		String maS = txtMaSuat.getText().trim();
-		String maP = cboPhim.getSelectedItem().toString().split(" - ")[0];
-		String phong = cboPhong.getSelectedItem().toString();
+		if (cboPhim.getSelectedIndex() == -1) {
+		    JOptionPane.showMessageDialog(this, "Chưa có dữ liệu phim, vui lòng thêm phim trước!");
+		    return false;
+		}
 
 		java.util.Date ngay = txtNgayChieu.getDate();
 		java.util.Date gio = (java.util.Date) spnGioChieu.getValue();
@@ -348,37 +324,30 @@ public class PNL_SuatChieu extends JPanel implements ActionListener, MouseListen
 		return true;
 	}
 
-	// --- XỬ LÝ SỰ KIỆN NÚT BẤM ---
-	// --- XỬ LÝ SỰ KIỆN NÚT BẤM ---
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		Object o = e.getSource();
 
-		// 1. XÓA RỖNG
 		if (o == btnXoaRong) {
 			txtMaSuat.setText("");
 			txtNgayChieu.setDate(null);
 			spnGioChieu.setValue(java.sql.Time.valueOf("00:00:00"));
-			if (cboPhim.getItemCount() > 0)
-				cboPhim.setSelectedIndex(0);
-			if (cboPhong.getItemCount() > 0)
-				cboPhong.setSelectedIndex(0);
+			
+			loadComboPhim();
+			if (cboPhong.getItemCount() > 0) cboPhong.setSelectedIndex(0);
 
 			txtMaSuat.requestFocus();
 			txtMaSuat.setEditable(true);
 			txtMaSuat.setBackground(new Color(40, 40, 40));
 			table.clearSelection();
 		}
-		// 2. THÊM SUẤT CHIẾU
 		else if (o == btnThem) {
-			if (!validData())
-				return;
+			if (!validData()) return;
 			try {
 				String ma = txtMaSuat.getText().trim();
-				String phim = cboPhim.getSelectedItem().toString().split(" - ")[0];
+				String phim = cboPhim.getSelectedItem().toString().split(" - ")[0].trim(); 
 				String phong = cboPhong.getSelectedItem().toString();
 
-				// --- FIX: Lấy dữ liệu từ JDateChooser và JSpinner giống Code 1 ---
 				java.util.Date dateNgay = txtNgayChieu.getDate();
 				java.util.Date dateGio = (java.util.Date) spnGioChieu.getValue();
 				LocalDate ngay = dateNgay.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
@@ -386,7 +355,6 @@ public class PNL_SuatChieu extends JPanel implements ActionListener, MouseListen
 
 				SuatChieu s = new SuatChieu(ma, phim, phong, ngay, gio);
 
-				// Mở comment khi muốn chạy DB thực tế
 				if (suatChieuDAO.themSuatChieu(s)) {
 					loadDataToTable();
 					JOptionPane.showMessageDialog(this, "Thêm suất chiếu thành công!");
@@ -394,22 +362,17 @@ public class PNL_SuatChieu extends JPanel implements ActionListener, MouseListen
 				} else {
 					JOptionPane.showMessageDialog(this, "Trùng mã suất chiếu!", "Lỗi", JOptionPane.ERROR_MESSAGE);
 				}
-				JOptionPane.showMessageDialog(this, "Đã bắt sự kiện Thêm.");
 			} catch (Exception ex) {
-				JOptionPane.showMessageDialog(this, "Lỗi lấy dữ liệu Ngày/Giờ!", "Lỗi hệ thống",
-						JOptionPane.ERROR_MESSAGE);
+				JOptionPane.showMessageDialog(this, "Lỗi lấy dữ liệu Ngày/Giờ!", "Lỗi hệ thống", JOptionPane.ERROR_MESSAGE);
 			}
 		}
-		// 3. XÓA SUẤT CHIẾU
 		else if (o == btnXoa) {
 			int row = table.getSelectedRow();
 			if (row == -1) {
-				JOptionPane.showMessageDialog(this, "Vui lòng chọn suất chiếu cần xóa từ bảng!", "Nhắc nhở",
-						JOptionPane.WARNING_MESSAGE);
+				JOptionPane.showMessageDialog(this, "Vui lòng chọn suất chiếu cần xóa từ bảng!", "Nhắc nhở", JOptionPane.WARNING_MESSAGE);
 				return;
 			}
-			if (JOptionPane.showConfirmDialog(this, "Bạn có chắc muốn xóa suất chiếu này?", "Xác nhận",
-					JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+			if (JOptionPane.showConfirmDialog(this, "Bạn có chắc muốn xóa suất chiếu này?", "Xác nhận", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
 				String ma = model.getValueAt(row, 0).toString();
 				if (suatChieuDAO.xoaSuatChieu(ma)) {
 					loadDataToTable();
@@ -418,28 +381,22 @@ public class PNL_SuatChieu extends JPanel implements ActionListener, MouseListen
 				} else {
 					JOptionPane.showMessageDialog(this, "Xóa thất bại!", "Lỗi CSDL", JOptionPane.ERROR_MESSAGE);
 				}
-				JOptionPane.showMessageDialog(this, "Đã bắt sự kiện Xóa.");
 			}
 		}
-		// 4. SỬA SUẤT CHIẾU
 		else if (o == btnSua) {
 			int row = table.getSelectedRow();
 			if (row == -1) {
-				JOptionPane.showMessageDialog(this, "Vui lòng chọn suất chiếu cần cập nhật!", "Nhắc nhở",
-						JOptionPane.WARNING_MESSAGE);
+				JOptionPane.showMessageDialog(this, "Vui lòng chọn suất chiếu cần cập nhật!", "Nhắc nhở", JOptionPane.WARNING_MESSAGE);
 				return;
 			}
 
-			// --- FIX: Sửa lỗi gõ nhầm validateData() thành validData() ---
-			if (!validData())
-				return;
+			if (!validData()) return;
 
 			try {
 				String ma = txtMaSuat.getText().trim();
-				String phim = cboPhim.getSelectedItem().toString().split(" - ")[0];
+				String phim = cboPhim.getSelectedItem().toString().split(" - ")[0].trim();
 				String phong = cboPhong.getSelectedItem().toString();
 
-				// --- FIX: Lấy dữ liệu từ JDateChooser và JSpinner giống Code 1 ---
 				java.util.Date dateNgay = txtNgayChieu.getDate();
 				java.util.Date dateGio = (java.util.Date) spnGioChieu.getValue();
 				LocalDate ngay = dateNgay.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
@@ -452,14 +409,10 @@ public class PNL_SuatChieu extends JPanel implements ActionListener, MouseListen
 				} else {
 					JOptionPane.showMessageDialog(this, "Sửa thất bại!", "Lỗi CSDL", JOptionPane.ERROR_MESSAGE);
 				}
-				JOptionPane.showMessageDialog(this, "Đã bắt sự kiện Sửa.");
 			} catch (Exception ex) {
-				JOptionPane.showMessageDialog(this, "Lỗi lấy dữ liệu Ngày/Giờ!", "Lỗi hệ thống",
-						JOptionPane.ERROR_MESSAGE);
+				JOptionPane.showMessageDialog(this, "Lỗi lấy dữ liệu Ngày/Giờ!", "Lỗi hệ thống", JOptionPane.ERROR_MESSAGE);
 			}
 		}
-		
-		// TÌM HÀM actionPerformed, THÊM KHỐI LỆNH NÀY VÀO CUỐI HÀM:
 	    else if (o == btnDenBanVe) {
 	        int row = table.getSelectedRow();
 	        if (row == -1) {
@@ -483,17 +436,15 @@ public class PNL_SuatChieu extends JPanel implements ActionListener, MouseListen
 	    }
 	}
 
-	// --- SỰ KIỆN CLICK VÀO BẢNG ---
 	@Override
 	public void mouseClicked(MouseEvent e) {
 		int row = table.getSelectedRow();
 		if (row != -1) {
 			txtMaSuat.setText(model.getValueAt(row, 0).toString());
 
-			// Xử lý ComboBox Phim (nếu bạn gộp chuỗi giống code 1)
-			String maPhimTable = model.getValueAt(row, 1).toString();
+			String tenPhimTable = model.getValueAt(row, 1).toString();
 			for (int i = 0; i < cboPhim.getItemCount(); i++) {
-				if (cboPhim.getItemAt(i).startsWith(maPhimTable)) {
+				if (cboPhim.getItemAt(i).contains(tenPhimTable)) {
 					cboPhim.setSelectedIndex(i);
 					break;
 				}
@@ -501,19 +452,16 @@ public class PNL_SuatChieu extends JPanel implements ActionListener, MouseListen
 
 			cboPhong.setSelectedItem(model.getValueAt(row, 2).toString());
 
-			// --- FIX: Xử lý đổ dữ liệu ra Lịch (JDateChooser) ---
 			String ngayStr = model.getValueAt(row, 3).toString();
 			if (!ngayStr.isEmpty()) {
 				txtNgayChieu.setDate(java.sql.Date.valueOf(LocalDate.parse(ngayStr)));
 			}
 
-			// --- FIX: Xử lý đổ dữ liệu ra Khung giờ (JSpinner) ---
 			String gioStr = model.getValueAt(row, 4).toString();
 			if (!gioStr.isEmpty()) {
 				spnGioChieu.setValue(java.sql.Time.valueOf(LocalTime.parse(gioStr)));
 			}
 
-			// Khóa mã suất chiếu không cho sửa để bảo vệ Database
 			txtMaSuat.setEditable(false);
 			txtMaSuat.setBackground(new Color(60, 60, 60));
 		}
@@ -524,13 +472,33 @@ public class PNL_SuatChieu extends JPanel implements ActionListener, MouseListen
 	@Override public void mouseEntered(MouseEvent e) {}
 	@Override public void mouseExited(MouseEvent e) {}
 	
-	// HÀM LỌC PHIM
+    // FIX: Tự động chọn đúng Combo Phim khi bấm từ Trang Chủ nhảy sang
 	public void locTheoPhim(String tenPhim) {
+        loadComboPhim(); // Đảm bảo danh sách phim mới nhất
 		loadDataToTable(); 
+        
+        // Lọc dữ liệu trên bảng
 	    for(int i = model.getRowCount() - 1; i >= 0; i--) {
 	        if(!model.getValueAt(i, 1).toString().equalsIgnoreCase(tenPhim)) {
 	            model.removeRow(i);
 	        }
 	    }
+        
+        // Tự động set combobox đúng phim để tiện thêm suất chiếu
+        for (int i = 0; i < cboPhim.getItemCount(); i++) {
+            if (cboPhim.getItemAt(i).contains(tenPhim)) {
+                cboPhim.setSelectedIndex(i);
+                break;
+            }
+        }
+
+        // --- ĐOẠN CODE BỔ SUNG ĐỂ MỞ KHÓA FORM ---
+        txtMaSuat.setText(""); 
+        txtMaSuat.setEditable(true); // Mở khóa ô nhập mã suất
+        txtMaSuat.setBackground(new Color(40, 40, 40)); // Trả lại màu nền bình thường
+        txtNgayChieu.setDate(null); // Xóa ngày cũ
+        spnGioChieu.setValue(java.sql.Time.valueOf("00:00:00")); // Reset giờ
+        if (cboPhong.getItemCount() > 0) cboPhong.setSelectedIndex(0);
+        table.clearSelection(); // Bỏ chọn dưới bảng
 	}
 }

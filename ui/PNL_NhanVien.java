@@ -9,7 +9,9 @@ import java.util.ArrayList;
 import java.util.Locale;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
 import javax.swing.border.TitledBorder;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
 public class PNL_NhanVien extends JPanel implements ActionListener, MouseListener {
@@ -21,34 +23,70 @@ public class PNL_NhanVien extends JPanel implements ActionListener, MouseListene
     
     private NhanVienDAO nhanVienDAO;
 
+    // --- BẢNG MÀU CHỦ ĐỀ ĐỎ (NETFLIX / CGV THEME) ---
+    private Color bgDark = new Color(18, 18, 18);
+    private Color bgPanel = new Color(30, 30, 30);
+    private Color textWhite = new Color(240, 240, 240);
+    private Color themeRed = new Color(229, 9, 20); 
+
+    // --- LỚP NÚT BẤM CAO CẤP CHỐNG LỖI WINDOWS UI ---
+    class PosButton extends JButton {
+        private Color bgColor;
+        public PosButton(String text, Color bg, Color fg) {
+            super(text);
+            this.bgColor = bg;
+            setBackground(bg); // FIX: HIỂN THỊ MÀU NGAY KHI LOAD
+            setFont(new Font("Segoe UI", Font.BOLD, 14));
+            setForeground(fg);
+            setFocusPainted(false);
+            setContentAreaFilled(false);
+            setBorderPainted(false);
+            setCursor(new Cursor(Cursor.HAND_CURSOR));
+            setPreferredSize(new Dimension(120, 40));
+
+            addMouseListener(new MouseAdapter() {
+                public void mouseEntered(MouseEvent e) { setBackground(bgColor.brighter()); repaint(); }
+                public void mouseExited(MouseEvent e) { setBackground(bgColor); repaint(); }
+            });
+        }
+        @Override
+        protected void paintComponent(Graphics g) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.setColor(getBackground() == null ? bgColor : getBackground());
+            g2.fillRoundRect(0, 0, getWidth(), getHeight(), 8, 8);
+            g2.dispose();
+            super.paintComponent(g);
+        }
+    }
+
     public PNL_NhanVien() {
         nhanVienDAO = new NhanVienDAO();
         
         setLayout(new BorderLayout(15, 15));
-        setBackground(new Color(30, 30, 30));
-        setBorder(new EmptyBorder(15, 15, 15, 15));
+        setBackground(bgDark);
+        setBorder(new EmptyBorder(15, 20, 20, 20));
 
         // ==========================================
-        // 1. FORM NHẬP LIỆU (Thiết kế tối giản, chuyên nghiệp)
+        // 1. FORM NHẬP LIỆU
         // ==========================================
         JPanel pnlTop = new JPanel(new BorderLayout(0, 15));
         pnlTop.setOpaque(false);
 
         JPanel pnlInput = new JPanel(new GridLayout(3, 4, 20, 20));
-        pnlInput.setOpaque(false);
+        pnlInput.setBackground(bgPanel);
         pnlInput.setBorder(new EmptyBorder(15, 20, 15, 20)); 
 
         TitledBorder border = BorderFactory.createTitledBorder(
-                BorderFactory.createLineBorder(new Color(220, 20, 60), 1), "THÔNG TIN NHÂN VIÊN",
-                TitledBorder.LEFT, TitledBorder.TOP, new Font("Arial", Font.BOLD, 14), new Color(220, 20, 60)
+                BorderFactory.createLineBorder(new Color(70, 70, 70)), "THÔNG TIN NHÂN VIÊN",
+                TitledBorder.LEFT, TitledBorder.TOP, new Font("Segoe UI", Font.BOLD, 14), themeRed
         );
         
         JPanel pnlInputWrapper = new JPanel(new BorderLayout());
-        pnlInputWrapper.setOpaque(false);
+        pnlInputWrapper.setBackground(bgPanel);
         pnlInputWrapper.setBorder(border);
         pnlInputWrapper.add(pnlInput, BorderLayout.CENTER);
 
-        // Các trường nhập liệu
         pnlInput.add(createLabel("Mã NV:"));
         txtMa = createTextField();
         pnlInput.add(txtMa);
@@ -56,7 +94,10 @@ public class PNL_NhanVien extends JPanel implements ActionListener, MouseListene
         pnlInput.add(createLabel("Phòng Ban:"));
         String[] phongBan = {"Phòng tổ chức", "Phòng kỹ thuật", "Phòng nhân sự"};
         cboPhongBan = new JComboBox<>(phongBan);
-        cboPhongBan.setFont(new Font("Arial", Font.PLAIN, 14));
+        cboPhongBan.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+        cboPhongBan.setBackground(new Color(40, 40, 40));
+        cboPhongBan.setForeground(Color.WHITE);
+        cboPhongBan.setUI(new javax.swing.plaf.basic.BasicComboBoxUI());
         pnlInput.add(cboPhongBan);
 
         pnlInput.add(createLabel("Họ lót:"));
@@ -83,10 +124,10 @@ public class PNL_NhanVien extends JPanel implements ActionListener, MouseListene
         JPanel pnlBtns = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 0));
         pnlBtns.setOpaque(false);
         
-        btnThem = createButton("Thêm", new Color(46, 204, 113));
-        btnSua = createButton("Sửa", new Color(52, 152, 219));
-        btnXoa = createButton("Xóa", new Color(231, 76, 60));
-        btnXoaRong = createButton("Xóa Rỗng", new Color(127, 140, 141));
+        btnThem = new PosButton("THÊM", new Color(46, 204, 113), Color.WHITE);
+        btnSua = new PosButton("CẬP NHẬT", new Color(52, 152, 219), Color.WHITE);
+        btnXoa = new PosButton("XÓA", themeRed, Color.WHITE);
+        btnXoaRong = new PosButton("LÀM MỚI", new Color(100, 100, 100), Color.WHITE);
 
         pnlBtns.add(btnThem);
         pnlBtns.add(btnSua);
@@ -102,16 +143,15 @@ public class PNL_NhanVien extends JPanel implements ActionListener, MouseListene
         JPanel pnlCenter = new JPanel(new BorderLayout(0, 10));
         pnlCenter.setOpaque(false);
 
-        // --- Thanh Tìm Kiếm ---
         JPanel pnlTimKiem = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 0));
         pnlTimKiem.setOpaque(false);
         
-        JLabel lblTimKiem = createLabel("Tìm kiếm (Mã):");
-        lblTimKiem.setForeground(new Color(241, 196, 15)); // Màu vàng nổi bật
+        JLabel lblTimKiem = createLabel("Tìm kiếm (Mã/Tên):");
+        lblTimKiem.setForeground(new Color(212, 175, 55)); 
         txtTim = createTextField();
         txtTim.setPreferredSize(new Dimension(250, 35));
         
-        btnTim = createButton("Tìm", new Color(41, 128, 185)); // Nút tìm kiếm nhỏ hơn
+        btnTim = new PosButton("TÌM", new Color(41, 128, 185), Color.WHITE); 
         btnTim.setPreferredSize(new Dimension(80, 35));
         
         pnlTimKiem.add(lblTimKiem);
@@ -120,7 +160,13 @@ public class PNL_NhanVien extends JPanel implements ActionListener, MouseListene
 
         pnlCenter.add(pnlTimKiem, BorderLayout.NORTH);
 
-        // --- Bảng Dữ Liệu ---
+        JPanel pnlTableWrapper = new JPanel(new BorderLayout());
+        pnlTableWrapper.setBackground(bgPanel);
+        pnlTableWrapper.setBorder(BorderFactory.createCompoundBorder(
+            new LineBorder(new Color(60, 60, 60), 1),
+            new EmptyBorder(5, 5, 5, 5)
+        ));
+
         String[] cols = {"Mã NV", "Họ Lót", "Tên", "Tuổi", "Phòng Ban", "Tiền Lương"};
         model = new DefaultTableModel(cols, 0) {
             @Override
@@ -129,65 +175,64 @@ public class PNL_NhanVien extends JPanel implements ActionListener, MouseListene
         table = new JTable(model);
         
         table.setRowHeight(35);
-        table.getTableHeader().setFont(new Font("Arial", Font.BOLD, 14));
-        table.getTableHeader().setBackground(new Color(40, 40, 40)); 
-        table.getTableHeader().setForeground(Color.WHITE);
-        table.setFont(new Font("Arial", Font.PLAIN, 14));
-        table.setSelectionBackground(new Color(52, 152, 219)); 
+        table.setBackground(bgPanel); 
+        table.setForeground(textWhite);
+        table.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+        table.setSelectionBackground(themeRed); 
         table.setSelectionForeground(Color.WHITE);
-        table.setGridColor(new Color(60, 60, 60));
+        table.setShowGrid(false); 
+
+        DefaultTableCellRenderer headerRenderer = new DefaultTableCellRenderer();
+        headerRenderer.setBackground(new Color(20, 20, 20));
+        headerRenderer.setForeground(themeRed);
+        headerRenderer.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        headerRenderer.setHorizontalAlignment(JLabel.CENTER);
+        for (int i = 0; i < table.getModel().getColumnCount(); i++) {
+            table.getColumnModel().getColumn(i).setHeaderRenderer(headerRenderer);
+        }
+
+        DefaultTableCellRenderer rightRenderer = new DefaultTableCellRenderer();
+        rightRenderer.setHorizontalAlignment(JLabel.RIGHT);
+        table.getColumnModel().getColumn(5).setCellRenderer(rightRenderer);
 
         JScrollPane scrollPane = new JScrollPane(table);
-        scrollPane.getViewport().setBackground(new Color(30, 30, 30));
-        scrollPane.setBorder(BorderFactory.createLineBorder(new Color(100, 100, 100), 1));
+        scrollPane.getViewport().setBackground(bgPanel);
+        scrollPane.setBorder(BorderFactory.createEmptyBorder());
         
-        pnlCenter.add(scrollPane, BorderLayout.CENTER);
+        pnlTableWrapper.add(scrollPane, BorderLayout.CENTER);
+        pnlCenter.add(pnlTableWrapper, BorderLayout.CENTER);
         add(pnlCenter, BorderLayout.CENTER);
 
-        // Đăng ký sự kiện
         btnThem.addActionListener(this);
         btnSua.addActionListener(this);
         btnXoa.addActionListener(this);
         btnXoaRong.addActionListener(this);
-        btnTim.addActionListener(this); // Thêm sự kiện nút Tìm
+        btnTim.addActionListener(this); 
         table.addMouseListener(this);
 
         loadDataToTable();
     }
 
-    // --- CÁC HÀM HỖ TRỢ GIAO DIỆN ---
     private JLabel createLabel(String text) {
         JLabel lbl = new JLabel(text, SwingConstants.RIGHT);
-        lbl.setForeground(new Color(220, 220, 220));
-        lbl.setFont(new Font("Arial", Font.BOLD, 14));
+        lbl.setForeground(new Color(180, 180, 180));
+        lbl.setFont(new Font("Segoe UI", Font.BOLD, 14));
         return lbl;
     }
 
     private JTextField createTextField() {
         JTextField txt = new JTextField();
-        txt.setFont(new Font("Arial", Font.PLAIN, 14));
-        txt.setBackground(new Color(50, 50, 50)); 
+        txt.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+        txt.setBackground(new Color(40, 40, 40)); 
         txt.setForeground(Color.WHITE); 
-        txt.setCaretColor(Color.WHITE); 
+        txt.setCaretColor(themeRed); 
         txt.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(100, 100, 100)), 
+            BorderFactory.createLineBorder(new Color(80, 80, 80)), 
             new EmptyBorder(5, 10, 5, 10) 
         ));
         return txt;
     }
 
-    private JButton createButton(String text, Color bg) {
-        JButton btn = new JButton(text);
-        btn.setFont(new Font("Arial", Font.BOLD, 14));
-        btn.setBackground(bg);
-        btn.setForeground(Color.WHITE);
-        btn.setFocusPainted(false);
-        btn.setPreferredSize(new Dimension(120, 38)); 
-        btn.setCursor(new Cursor(Cursor.HAND_CURSOR)); 
-        return btn;
-    }
-
-    // --- HÀM KIỂM TRA DỮ LIỆU (VALIDATION) ---
     private boolean validateData() {
         String ma = txtMa.getText().trim();
         String ho = txtHo.getText().trim();
@@ -199,12 +244,10 @@ public class PNL_NhanVien extends JPanel implements ActionListener, MouseListene
             JOptionPane.showMessageDialog(this, "Vui lòng nhập đầy đủ thông tin.", "Thông báo", JOptionPane.WARNING_MESSAGE);
             return false;
         }
-
         if (ho.matches(".*\\d.*") || ten.matches(".*\\d.*")) {
             JOptionPane.showMessageDialog(this, "Họ và Tên không được chứa chữ số.", "Thông báo", JOptionPane.WARNING_MESSAGE);
             return false;
         }
-
         try {
             int tuoi = Integer.parseInt(tuoiStr);
             if (tuoi < 18 || tuoi > 62) {
@@ -217,7 +260,6 @@ public class PNL_NhanVien extends JPanel implements ActionListener, MouseListene
             txtTuoi.requestFocus();
             return false;
         }
-
         try {
             double luong = Double.parseDouble(luongStr);
             if (luong <= 0) {
@@ -230,11 +272,9 @@ public class PNL_NhanVien extends JPanel implements ActionListener, MouseListene
             txtLuong.requestFocus();
             return false;
         }
-
         return true; 
     }
 
-    // --- LOAD DỮ LIỆU (Hàm nạp danh sách bất kỳ vào bảng) ---
     private void xoaDuLieuBang() {
         model.setRowCount(0);
     }
@@ -245,7 +285,7 @@ public class PNL_NhanVien extends JPanel implements ActionListener, MouseListene
         for (NhanVien nv : ds) {
             model.addRow(new Object[]{
                 nv.getMaNV(), nv.getHoNV(), nv.getTenNV(), nv.getTuoi(), 
-                nv.getPhongBan(), nf.format(nv.getTienLuong())
+                nv.getPhongBan(), nf.format(nv.getTienLuong()) + " đ"
             });
         }
     }
@@ -255,25 +295,25 @@ public class PNL_NhanVien extends JPanel implements ActionListener, MouseListene
         hienThiDanhSach(ds);
     }
 
-    // --- XỬ LÝ SỰ KIỆN ---
     @Override
     public void actionPerformed(ActionEvent e) {
         Object o = e.getSource();
 
         if (o == btnXoaRong) {
-            // Xóa nội dung trên form
             txtMa.setText(""); txtHo.setText(""); txtTen.setText("");
             txtTuoi.setText(""); txtLuong.setText(""); cboPhongBan.setSelectedIndex(0);
             txtMa.requestFocus();
+            txtMa.setEditable(true);
+            txtMa.setBackground(new Color(40, 40, 40));
+            table.clearSelection();
             
-            // Xóa luôn ô tìm kiếm và tải lại toàn bộ dữ liệu (Như một nút Làm Mới)
             txtTim.setText("");
             loadDataToTable();
         } 
         else if (o == btnTim) {
             String tuKhoa = txtTim.getText().trim();
             if (tuKhoa.isEmpty()) {
-                loadDataToTable(); // Nếu ô tìm kiếm rỗng thì hiện tất cả
+                loadDataToTable(); 
             } else {
                 ArrayList<NhanVien> dsTimKiem = nhanVienDAO.timNhanVien(tuKhoa);
                 hienThiDanhSach(dsTimKiem);
@@ -296,6 +336,7 @@ public class PNL_NhanVien extends JPanel implements ActionListener, MouseListene
             if (nhanVienDAO.themNhanVien(nv)) {
                 loadDataToTable();
                 JOptionPane.showMessageDialog(this, "Thêm nhân viên thành công.", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+                btnXoaRong.doClick();
             } else {
                 JOptionPane.showMessageDialog(this, "Mã nhân viên đã tồn tại trong hệ thống.", "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
@@ -309,8 +350,9 @@ public class PNL_NhanVien extends JPanel implements ActionListener, MouseListene
             if (JOptionPane.showConfirmDialog(this, "Bạn có chắc chắn muốn xóa nhân viên này?", "Xác nhận xóa", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION) {
                 String ma = model.getValueAt(row, 0).toString();
                 if (nhanVienDAO.xoaNhanVien(ma)) {
-                    loadDataToTable(); // Cập nhật lại toàn bảng thay vì chỉ xóa dòng
+                    loadDataToTable(); 
                     JOptionPane.showMessageDialog(this, "Xóa nhân viên thành công.", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+                    btnXoaRong.doClick();
                 }
             }
         }
@@ -349,6 +391,9 @@ public class PNL_NhanVien extends JPanel implements ActionListener, MouseListene
             
             String luongStr = model.getValueAt(row, 5).toString().replaceAll("[^0-9]", ""); 
             txtLuong.setText(luongStr);
+            
+            txtMa.setEditable(false);
+            txtMa.setBackground(new Color(60, 60, 60)); 
         }
     }
     @Override public void mousePressed(MouseEvent e) {}

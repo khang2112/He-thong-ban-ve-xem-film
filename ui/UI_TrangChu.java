@@ -2,19 +2,23 @@ package ui;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.time.LocalDate;
+import java.text.NumberFormat;
+import java.util.Locale;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 
 import dao.PhimDAO;
+import dao.ThongKeDAO;
+import dao.KhachHangDAO;
+import entity.Phim;
 import entity.TaiKhoan;
 import entity.TopPhim;
 
 public class UI_TrangChu extends JFrame implements ActionListener {
-    // Lưu thông tin người đăng nhập
     private TaiKhoan userLogin;
-    private boolean isAdmin; // Biến kiểm tra quyền Quản lý
+    private boolean isAdmin; 
     
-    // --- BẢNG MÀU CHUYÊN NGHIỆP ---
     private Color bgDark = new Color(18, 18, 18);         
     private Color bgSidebar = new Color(25, 25, 25);      
     private Color colorHover = new Color(45, 45, 45);     
@@ -31,7 +35,6 @@ public class UI_TrangChu extends JFrame implements ActionListener {
     private PNL_SuatChieu pnlSuatChieu;
     private PNL_BanVe pnlBanVe;
 
-    // --- LỚP NÚT BẤM MENU ---
     class MenuButton extends JButton {
         public MenuButton(String text) {
             super("  " + text); 
@@ -63,8 +66,15 @@ public class UI_TrangChu extends JFrame implements ActionListener {
     public UI_TrangChu(TaiKhoan tk) {
         this.userLogin = tk;
         
-        // Phân quyền cứng dựa vào tên đăng nhập do DB không có cột VaiTro
-        this.isAdmin = (userLogin != null && userLogin.getTenDangNhap().equalsIgnoreCase("admin"));
+        if (this.userLogin != null) {
+            String role = this.userLogin.getVaiTro();
+            String user = this.userLogin.getTenDangNhap();
+            this.isAdmin = (user.equalsIgnoreCase("admin") || 
+                            role.contains("QUẢN LÝ") || 
+                            role.contains("MANAGER"));
+        } else {
+            this.isAdmin = false;
+        }
         
         setTitle("Hệ Thống Quản Lý Rạp Chiếu Phim - POS");
         setSize(1200, 750); 
@@ -73,9 +83,6 @@ public class UI_TrangChu extends JFrame implements ActionListener {
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
 
-        // ==========================================
-        // 1. SIDEBAR (THANH ĐIỀU HƯỚNG TRÁI)
-        // ==========================================
         JPanel pnlSidebar = new JPanel();
         pnlSidebar.setLayout(new BorderLayout()); 
         pnlSidebar.setBackground(bgSidebar);
@@ -134,7 +141,6 @@ public class UI_TrangChu extends JFrame implements ActionListener {
 
         add(pnlSidebar, BorderLayout.WEST);
 
-        // Đăng ký sự kiện
         btnTrangChu.addActionListener(this);
         btnPhim.addActionListener(this);
         btnSuatChieu.addActionListener(this);
@@ -145,9 +151,6 @@ public class UI_TrangChu extends JFrame implements ActionListener {
         btnThongKe.addActionListener(this);
         btnDangXuat.addActionListener(this);
 
-        // ==========================================
-        // 2. VÙNG TRUNG TÂM (NỘI DUNG CHÍNH)
-        // ==========================================
         JPanel pnlMainArea = new JPanel(new BorderLayout());
         pnlMainArea.setBackground(bgDark);
 
@@ -180,6 +183,7 @@ public class UI_TrangChu extends JFrame implements ActionListener {
         pnlCards.add(new PNL_NhanVien(), "NhanVien");
         pnlCards.add(new PNL_KhachHang(), "KhachHang");
         pnlCards.add(pnlBanVe, "BanVe");
+        pnlCards.add(new PNL_HoaDon(), "HoaDon");
         pnlCards.add(new PNL_ThongKe(), "ThongKe");
         
         pnlMainArea.add(pnlCards, BorderLayout.CENTER);
@@ -188,9 +192,10 @@ public class UI_TrangChu extends JFrame implements ActionListener {
         phanQuyen();
     }
 
-    // ==========================================================
-    // HÀM TẠO NỘI DUNG TRANG CHỦ (DASHBOARD)
-    // ==========================================================
+    public TaiKhoan getTaiKhoanDangNhap() {
+        return this.userLogin;
+    }
+
     private JPanel createTrangChuPanel() {
         JPanel pnlContent = new JPanel(new BorderLayout(20, 20));
         pnlContent.setBackground(bgDark);
@@ -200,9 +205,23 @@ public class UI_TrangChu extends JFrame implements ActionListener {
         pnlStats.setBackground(bgDark);
         pnlStats.setPreferredSize(new Dimension(0, 100));
 
-        pnlStats.add(createStatCard("Doanh thu hôm nay", "12.500.000 đ", new Color(46, 204, 113)));
-        pnlStats.add(createStatCard("Vé đã bán", "156 Vé", new Color(52, 152, 219)));
-        pnlStats.add(createStatCard("Khách hàng mới", "+24 Người", colorGold));
+        // ====================================================
+        // FIX: NẠP DỮ LIỆU THỐNG KÊ ĐỘNG CHO TRANG CHỦ
+        // ====================================================
+        LocalDate today = LocalDate.now();
+        ThongKeDAO tkDAO = new ThongKeDAO();
+        double[] stats = tkDAO.layThongKeTongQuan(today.getDayOfMonth(), today.getMonthValue(), today.getYear(), "");
+        
+        NumberFormat nf = NumberFormat.getInstance(new Locale("vi", "VN"));
+        String doanhThuHnay = nf.format(stats[1]) + " đ";
+        String soVeHnay = (int)stats[0] + " Vé";
+        
+        KhachHangDAO khDAO = new KhachHangDAO();
+        int tongKH = khDAO.docTuBang().size(); 
+
+        pnlStats.add(createStatCard("Doanh thu hôm nay", doanhThuHnay, new Color(46, 204, 113)));
+        pnlStats.add(createStatCard("Vé đã bán (Hôm nay)", soVeHnay, new Color(52, 152, 219)));
+        pnlStats.add(createStatCard("Tổng khách hàng", tongKH + " Người", colorGold));
 
         pnlContent.add(pnlStats, BorderLayout.NORTH);
 
@@ -217,12 +236,18 @@ public class UI_TrangChu extends JFrame implements ActionListener {
         JPanel pnlMovieList = new JPanel(new FlowLayout(FlowLayout.LEFT, 20, 0));
         pnlMovieList.setBackground(bgDark);
 
-        pnlMovieList.add(createMovieCard("images/phiphong.jpg", "Phí phông: Quỷ máu rừng thiên", "Kinh dị, Tâm linh"));
-        pnlMovieList.add(createMovieCard("images/mai.jpg", "Mai", "Tâm lý, Tình cảm"));
-        pnlMovieList.add(createMovieCard("images/datrungphuongnam.jpg", "Đất Rừng Phương Nam", "Lịch sử, Hành động"));
-        pnlMovieList.add(createMovieCard("images/springjourney.jpg", "Bố Già", "Tâm lý, Gia đình"));
-        pnlMovieList.add(createMovieCard("images/thejunglebook.jpg", "Avatar 2: Dòng Chảy", "Khoa học viễn tưởng"));
-        pnlMovieList.add(createMovieCard("images/trumso.jpg", "Trùm sò", "Hài hước, Hành động"));
+        PhimDAO phimDAO = new PhimDAO();
+        java.util.List<Phim> dsPhim = phimDAO.docTuBang();
+        
+        if (dsPhim.isEmpty()) {
+            JLabel lblEmpty = new JLabel("Chưa có phim nào trong CSDL. Hãy thêm phim!");
+            lblEmpty.setForeground(textWhite);
+            pnlMovieList.add(lblEmpty);
+        } else {
+            for (Phim p : dsPhim) {
+                pnlMovieList.add(createMovieCard(p.getHinhAnh(), p.getTenPhim(), p.getTheLoai()));
+            }
+        }
 
         JScrollPane scrollPane = new JScrollPane(pnlMovieList);
         scrollPane.setBorder(BorderFactory.createEmptyBorder());
@@ -270,19 +295,8 @@ public class UI_TrangChu extends JFrame implements ActionListener {
                 item.setMaximumSize(new Dimension(220, 55));
                 item.setBorder(new EmptyBorder(8, 10, 8, 10));
 
-                Color bgItem;
-                Color rankColor;
-
-                if (rank == 1) {
-                    bgItem = new Color(60, 50, 20);
-                    rankColor = new Color(255, 215, 0); 
-                } else if (rank == 2) {
-                    bgItem = new Color(45, 45, 45);
-                    rankColor = new Color(180, 180, 180);
-                } else {
-                    bgItem = new Color(35, 35, 35);
-                    rankColor = new Color(150, 150, 150);
-                }
+                Color bgItem = (rank == 1) ? new Color(60, 50, 20) : (rank == 2 ? new Color(45, 45, 45) : new Color(35, 35, 35));
+                Color rankColor = (rank == 1) ? new Color(255, 215, 0) : (rank == 2 ? new Color(180, 180, 180) : new Color(150, 150, 150));
 
                 item.setBackground(bgItem);
 
@@ -350,9 +364,15 @@ public class UI_TrangChu extends JFrame implements ActionListener {
 
         JLabel lblImg = new JLabel();
         lblImg.setHorizontalAlignment(JLabel.CENTER);
-        ImageIcon icon = scaleImage(imagePath, 200, 250);
-        if(icon != null) lblImg.setIcon(icon);
-        else lblImg.setText("No Image");
+        
+        if (imagePath == null || imagePath.isEmpty()) {
+            lblImg.setText("NO POSTER");
+        } else {
+            ImageIcon icon = scaleImage(imagePath, 200, 250);
+            if(icon != null) lblImg.setIcon(icon);
+            else lblImg.setText("NO POSTER");
+        }
+        
         lblImg.setForeground(Color.WHITE);
 
         JLabel lblTitle = new JLabel(title, JLabel.CENTER);
@@ -395,68 +415,38 @@ public class UI_TrangChu extends JFrame implements ActionListener {
         }
     }
     
-    // --- PHÂN QUYỀN ĐÃ ĐƯỢC CHỈNH SỬA ---
     private void phanQuyen() {
          if (!isAdmin) {
              btnNhanVien.setEnabled(false);
-             btnNhanVien.setToolTipText("Chỉ Quản lý mới có quyền truy cập");
              btnPhim.setEnabled(false);
-             btnPhim.setToolTipText("Chỉ Quản lý mới có quyền truy cập");
              btnSuatChieu.setEnabled(false);
-             btnSuatChieu.setToolTipText("Chỉ Quản lý mới có quyền truy cập");
          }
     }
     
-    // --- XỬ LÝ SỰ KIỆN CHUYỂN TRANG ---
     @Override
     public void actionPerformed(ActionEvent e) {
         Object source = e.getSource();
 
         if (source == btnTrangChu) {
-            cardLayout.show(pnlCards, "TrangChu");
+            pnlCards.add(createTrangChuPanel(), "TrangChuMoi");
+            cardLayout.show(pnlCards, "TrangChuMoi");
         } else if (source == btnPhim) {
-            if (!isAdmin) {
-                JOptionPane.showMessageDialog(this, "Nhân viên không có quyền quản lý Phim!");
-                return;
-            }
+            if (!isAdmin) { JOptionPane.showMessageDialog(this, "Nhân viên không có quyền quản lý Phim!"); return; }
             cardLayout.show(pnlCards, "Phim");
         } else if (source == btnSuatChieu) {
-            if (!isAdmin) {
-                JOptionPane.showMessageDialog(this, "Nhân viên không có quyền quản lý Suất chiếu!");
-                return;
-            }
+            if (!isAdmin) { JOptionPane.showMessageDialog(this, "Nhân viên không có quyền!"); return; }
+            pnlSuatChieu.loadDataToTable(); 
             cardLayout.show(pnlCards, "SuatChieu");
         } else if (source == btnNhanVien) {
-            if (!isAdmin) {
-                JOptionPane.showMessageDialog(this, "Chỉ Quản lý mới có quyền truy cập Nhân viên!");
-                return;
-            }
+            if (!isAdmin) { JOptionPane.showMessageDialog(this, "Chỉ Quản lý mới có quyền!"); return; }
             cardLayout.show(pnlCards, "NhanVien");
         } else if (source == btnKhachHang) {
-            Component[] comps = pnlCards.getComponents();
-            for (Component c : comps) {
-                if (c instanceof PNL_KhachHang) {
-                    ((PNL_KhachHang) c).loadDataToTable(); 
-                }
-            }
             cardLayout.show(pnlCards, "KhachHang");
         } else if (source == btnHoaDon) {
-            Component[] comps = pnlCards.getComponents();
-            for (Component c : comps) {
-                if (c instanceof PNL_HoaDon) {
-                    ((PNL_HoaDon) c).loadDataHoaDon(); 
-                }
-            }
             cardLayout.show(pnlCards, "HoaDon");
         } else if (source == btnBanVe) {
             cardLayout.show(pnlCards, "BanVe");
         } else if (source == btnThongKe) {
-            Component[] comps = pnlCards.getComponents();
-            for (Component c : comps) {
-                if (c instanceof PNL_ThongKe) {
-                    ((PNL_ThongKe) c).loadData(); 
-                }
-            }
             cardLayout.show(pnlCards, "ThongKe");
         } else if (source == btnDangXuat) {
             int confirm = JOptionPane.showConfirmDialog(this, "Bạn muốn đăng xuất?", "Xác nhận", JOptionPane.YES_NO_OPTION);
