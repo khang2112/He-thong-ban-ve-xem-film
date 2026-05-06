@@ -28,6 +28,8 @@ public class UI_TrangChu extends JFrame implements ActionListener {
     
     private JPanel pnlCards; 
     private CardLayout cardLayout;
+    private PNL_SuatChieu pnlSuatChieu;
+    private PNL_BanVe pnlBanVe;
 
     // --- LỚP NÚT BẤM MENU TÙY CHỈNH CHỐNG LỖI WINDOWS UI ---
     class MenuButton extends JButton {
@@ -173,14 +175,15 @@ public class UI_TrangChu extends JFrame implements ActionListener {
 
         JPanel pnlHome = createTrangChuPanel();
         PNL_Phim pnlPhim = new PNL_Phim();
+        pnlSuatChieu = new PNL_SuatChieu(this);
+        pnlBanVe = new PNL_BanVe(this);
         
         pnlCards.add(pnlHome, "TrangChu");
         pnlCards.add(pnlPhim, "Phim");
-        pnlCards.add(new PNL_SuatChieu(), "SuatChieu");
+        pnlCards.add(pnlSuatChieu, "SuatChieu");
         pnlCards.add(new PNL_NhanVien(), "NhanVien");
         pnlCards.add(new PNL_KhachHang(), "KhachHang");
-        pnlCards.add(new PNL_HoaDon(), "HoaDon");
-        pnlCards.add(new PNL_BanVe(), "BanVe");
+        pnlCards.add(pnlBanVe, "BanVe");
         pnlCards.add(new PNL_ThongKe(), "ThongKe");
         
         pnlMainArea.add(pnlCards, BorderLayout.CENTER);
@@ -403,6 +406,15 @@ public class UI_TrangChu extends JFrame implements ActionListener {
         card.add(lblImg, BorderLayout.CENTER);
         card.add(pnlText, BorderLayout.SOUTH);
         
+        card.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        card.addMouseListener(new MouseAdapter() {
+            public void mouseClicked(MouseEvent e) {
+                chuyenTrangSuatChieuTheoPhim(title);
+            }
+            public void mouseEntered(MouseEvent e) { card.setBackground(new Color(50, 50, 50)); }
+            public void mouseExited(MouseEvent e) { card.setBackground(new Color(35, 35, 35)); }
+        });
+        
         return card;
     }
 
@@ -489,5 +501,19 @@ public class UI_TrangChu extends JFrame implements ActionListener {
                 this.dispose();
             }
         }
+    }
+    
+    public void chuyenTrangSuatChieuTheoPhim(String tenPhim) {
+        pnlSuatChieu.locTheoPhim(tenPhim); 
+        cardLayout.show(pnlCards, "SuatChieu");
+    }
+
+    public void chuyenTrangBanVeTheoSuat(String tenPhim, String ngayChieu, String maSuat) {
+        pnlBanVe.tuDongChonSuat(tenPhim, ngayChieu, maSuat); 
+        cardLayout.show(pnlCards, "BanVe");
+    }
+
+    public void capNhatSoLuongSuatChieu() {
+        pnlSuatChieu.loadDataToTable(); 
     }
 }

@@ -23,6 +23,7 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
 public class PNL_BanVe extends JPanel implements ActionListener {
+	private UI_TrangChu ui_TrangChu;
     
     // --- BỘ 3 COMBOBOX LỌC DỮ LIỆU ---
     private JComboBox<String> cboPhim, cboNgay, cboSuatChieu;
@@ -109,7 +110,8 @@ public class PNL_BanVe extends JPanel implements ActionListener {
         }
     }
 
-    public PNL_BanVe() {
+    public PNL_BanVe(UI_TrangChu ui_TrangChu) {
+    	this.ui_TrangChu = ui_TrangChu;
         setLayout(new BorderLayout(20, 20)); 
         setBackground(new Color(18, 18, 18)); 
         setBorder(new EmptyBorder(20, 20, 20, 20));
@@ -607,10 +609,38 @@ public class PNL_BanVe extends JPanel implements ActionListener {
                     
                     txtMaKH.setText("");
                     loadGheTheoSuat(); // Cập nhật lại sơ đồ ghế lập tức
+                    if (ui_TrangChu != null) {
+                        ui_TrangChu.capNhatSoLuongSuatChieu();
+                    }
                 } else {
                     JOptionPane.showMessageDialog(this, "Lỗi kết nối CSDL, thanh toán thất bại!", "Lỗi hệ thống", JOptionPane.ERROR_MESSAGE);
                 }
             }
+        }
+    }
+    
+ // THÊM HÀM NÀY XUỐNG DƯỚI CÙNG CLASS
+    public void tuDongChonSuat(String tenPhim, String ngayChieuYYYYMMDD, String maSuat) {
+        loadDuLieuVaoBoNho(); 
+        try {
+            java.time.LocalDate date = java.time.LocalDate.parse(ngayChieuYYYYMMDD);
+            String ngayChieuDDMMYYYY = date.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+
+            cboPhim.setSelectedItem(tenPhim);
+            
+            SwingUtilities.invokeLater(() -> {
+                cboNgay.setSelectedItem(ngayChieuDDMMYYYY);
+                SwingUtilities.invokeLater(() -> {
+                    for(int i = 0; i < cboSuatChieu.getItemCount(); i++) {
+                        if(cboSuatChieu.getItemAt(i).startsWith(maSuat)) {
+                            cboSuatChieu.setSelectedIndex(i);
+                            break;
+                        }
+                    }
+                });
+            });
+        } catch(Exception e) {
+            System.out.println("Lỗi auto chọn: " + e.getMessage());
         }
     }
 }

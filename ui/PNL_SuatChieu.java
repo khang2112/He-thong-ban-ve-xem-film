@@ -24,6 +24,10 @@ import entity.SuatChieu;
 
 public class PNL_SuatChieu extends JPanel implements ActionListener, MouseListener {
 	private JTextField txtMaSuat;
+	private UI_TrangChu ui_TrangChu;
+    private JButton btnDenBanVe;
+    private dao.PhimDAO phimDAO;       
+    private dao.HoaDonDAO hoaDonDAO;
 	private JDateChooser txtNgayChieu;
 	private JSpinner spnGioChieu;
 	private JComboBox<String> cboPhim, cboPhong;
@@ -79,9 +83,13 @@ public class PNL_SuatChieu extends JPanel implements ActionListener, MouseListen
 		}
 	}
 
-	public PNL_SuatChieu() {
+	public PNL_SuatChieu(UI_TrangChu ui_TrangChu) {
+		this.ui_TrangChu = ui_TrangChu;
+		
 		suatChieuDAO = new SuatChieuDAO(); // Nạp kết nối CSDL
-
+		phimDAO = new dao.PhimDAO();      
+        hoaDonDAO = new dao.HoaDonDAO();
+		
 		setLayout(new BorderLayout(15, 15));
 		setBackground(bgDark);
 		setBorder(new EmptyBorder(15, 20, 20, 20));
@@ -173,12 +181,14 @@ public class PNL_SuatChieu extends JPanel implements ActionListener, MouseListen
 		btnSua = new PosButton("CẬP NHẬT", new Color(52, 152, 219), Color.WHITE);
 		btnXoa = new PosButton("XÓA", themeRed, Color.WHITE);
 		btnXoaRong = new PosButton("LÀM MỚI", new Color(100, 100, 100), Color.WHITE);
-
+		btnDenBanVe = new PosButton("BÁN VÉ", new Color(212, 175, 55), Color.BLACK);
+		
 		pnlBtns.add(btnThem);
 		pnlBtns.add(btnSua);
 		pnlBtns.add(btnXoa);
 		pnlBtns.add(btnXoaRong);
-
+		pnlBtns.add(btnDenBanVe);
+		
 		pnlTop.add(pnlBtns, BorderLayout.SOUTH);
 		add(pnlTop, BorderLayout.NORTH);
 
@@ -190,7 +200,7 @@ public class PNL_SuatChieu extends JPanel implements ActionListener, MouseListen
 		pnlTableWrapper.setBorder(BorderFactory.createCompoundBorder(new LineBorder(new Color(60, 60, 60), 1),
 				new EmptyBorder(5, 5, 5, 5)));
 
-		String[] cols = { "Mã Suất", "Mã Phim", "Phòng Chiếu", "Ngày Chiếu", "Giờ Chiếu" };
+		String[] cols = { "Mã Suất", "Tên Phim", "Phòng Chiếu", "Ngày Chiếu", "Giờ Chiếu", "Trạng Thái Vé"};
 		model = new DefaultTableModel(cols, 0) {
 			@Override
 			public boolean isCellEditable(int row, int column) {
@@ -234,6 +244,7 @@ public class PNL_SuatChieu extends JPanel implements ActionListener, MouseListen
 		btnXoa.addActionListener(this);
 		btnXoaRong.addActionListener(this);
 		table.addMouseListener(this);
+		btnDenBanVe.addActionListener(this);
 
 		// Gọi hàm load dữ liệu CSDL lên bảng
 		loadDataToTable();
@@ -274,9 +285,22 @@ public class PNL_SuatChieu extends JPanel implements ActionListener, MouseListen
 		model.setRowCount(0);
 		try {
 			ArrayList<SuatChieu> ds = suatChieuDAO.docTuBang();
+            ArrayList<entity.Phim> dsPhim = phimDAO.docTuBang();
+            
 			for (SuatChieu s : ds) {
-				model.addRow(new Object[] { s.getMaSuat(), s.getMaPhim(), s.getPhongChieu(), s.getNgayChieu(),
-						s.getGioChieu() });
+                String tenPhim = s.getMaPhim();
+                for(entity.Phim p : dsPhim) {
+                    if(p.getMaPhim().equals(s.getMaPhim())) { tenPhim = p.getTenPhim(); break; }
+                }
+                
+                int tongGhe = 48; // Giả sử rạp bạn có 48 ghế
+                int gheDaBan = hoaDonDAO.layDanhSachGheDaBan(s.getMaSuat()).size();
+                int veCon = tongGhe - gheDaBan;
+                String trangThaiVe = veCon > 0 ? (veCon + "/" + tongGhe + " vé") : "HẾT VÉ";
+
+				model.addRow(new Object[] { 
+                    s.getMaSuat(), tenPhim, s.getPhongChieu(), s.getNgayChieu(), s.getGioChieu(), trangThaiVe 
+                });
 			}
 		} catch (Exception e) {
 			System.out.println("Lỗi Load Data: Bạn cần kiểm tra lại SuatChieuDAO");
@@ -434,6 +458,29 @@ public class PNL_SuatChieu extends JPanel implements ActionListener, MouseListen
 						JOptionPane.ERROR_MESSAGE);
 			}
 		}
+		
+		// TÌM HÀM actionPerformed, THÊM KHỐI LỆNH NÀY VÀO CUỐI HÀM:
+	    else if (o == btnDenBanVe) {
+	        int row = table.getSelectedRow();
+	        if (row == -1) {
+	            JOptionPane.showMessageDialog(this, "Vui lòng chọn 1 suất chiếu từ bảng để bán vé!", "Nhắc nhở", JOptionPane.WARNING_MESSAGE);
+	            return;
+	        }
+	        
+	        String maSuat = model.getValueAt(row, 0).toString();
+	        String tenPhim = model.getValueAt(row, 1).toString();
+	        String ngayChieu = model.getValueAt(row, 3).toString(); 
+	        String trangThai = model.getValueAt(row, 5).toString();
+	        
+	        if(trangThai.equals("HẾT VÉ")) {
+	            JOptionPane.showMessageDialog(this, "Suất chiếu này đã hết vé!", "Thông báo", JOptionPane.ERROR_MESSAGE);
+	            return;
+	        }
+
+	        if (ui_TrangChu != null) {
+	            ui_TrangChu.chuyenTrangBanVeTheoSuat(tenPhim, ngayChieu, maSuat);
+	        }
+	    }
 	}
 
 	// --- SỰ KIỆN CLICK VÀO BẢNG ---
@@ -476,4 +523,14 @@ public class PNL_SuatChieu extends JPanel implements ActionListener, MouseListen
 	@Override public void mouseReleased(MouseEvent e) {}
 	@Override public void mouseEntered(MouseEvent e) {}
 	@Override public void mouseExited(MouseEvent e) {}
+	
+	// HÀM LỌC PHIM
+	public void locTheoPhim(String tenPhim) {
+		loadDataToTable(); 
+	    for(int i = model.getRowCount() - 1; i >= 0; i--) {
+	        if(!model.getValueAt(i, 1).toString().equalsIgnoreCase(tenPhim)) {
+	            model.removeRow(i);
+	        }
+	    }
+	}
 }
