@@ -2,6 +2,8 @@ package ui;
 
 import dao.ThongKeDAO;
 import java.awt.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.geom.RoundRectangle2D;
 import java.text.NumberFormat;
 import java.time.LocalDate;
@@ -22,7 +24,7 @@ public class PNL_ThongKe extends JPanel {
     private CustomBarChart barChart;
     
     // Khai báo các component cho Bộ lọc (Filter)
-    private JComboBox<String> cboThang, cboNam, cboTheLoai;
+    private JComboBox<String> cboNgay, cboThang, cboNam, cboTheLoai;
     private JButton btnLoc;
 
     // --- LỚP VẼ BIỂU ĐỒ CỘT ---
@@ -50,7 +52,7 @@ public class PNL_ThongKe extends JPanel {
                 Graphics2D g2 = (Graphics2D) g;
                 g2.setColor(new Color(150, 150, 150));
                 g2.setFont(new Font("Segoe UI", Font.ITALIC, 14));
-                g2.drawString("Không có dữ liệu trong khoảng thời gian này...", getWidth()/2 - 100, getHeight()/2);
+                g2.drawString("Không có dữ liệu trong khoảng thời gian này...", getWidth()/2 - 140, getHeight()/2);
                 return;
             }
 
@@ -119,7 +121,15 @@ public class PNL_ThongKe extends JPanel {
         lblFilter.setFont(new Font("Segoe UI", Font.BOLD, 14));
         pnlFilter.add(lblFilter);
 
-        // Nạp data cho ComboBox
+        // Nạp data cho ComboBox Ngày
+        String[] arrNgay = new String[32];
+        arrNgay[0] = "Tất cả ngày";
+        for (int i = 1; i <= 31; i++) {
+            arrNgay[i] = "Ngày " + i;
+        }
+        cboNgay = createComboBox(arrNgay);
+
+        // Nạp data cho ComboBox Tháng
         cboThang = createComboBox(new String[]{"Tất cả tháng", "Tháng 1", "Tháng 2", "Tháng 3", "Tháng 4", "Tháng 5", "Tháng 6", "Tháng 7", "Tháng 8", "Tháng 9", "Tháng 10", "Tháng 11", "Tháng 12"});
         
         // Tự động lấy năm hiện tại để đưa vào bộ lọc
@@ -138,6 +148,8 @@ public class PNL_ThongKe extends JPanel {
         // Sự kiện khi bấm Lọc
         btnLoc.addActionListener(e -> loadData());
 
+        // Thêm vào Panel theo thứ tự Ngày -> Tháng -> Năm -> Thể loại
+        pnlFilter.add(cboNgay);
         pnlFilter.add(cboThang);
         pnlFilter.add(cboNam);
         pnlFilter.add(cboTheLoai);
@@ -215,6 +227,15 @@ public class PNL_ThongKe extends JPanel {
         pnlCenterWrapper.add(pnlSplit, BorderLayout.CENTER);
         add(pnlCenterWrapper, BorderLayout.CENTER);
 
+        // SỰ KIỆN TỰ ĐỘNG CẬP NHẬT: Khi mở màn hình Thống kê, nó sẽ tự động load lại Data mới nhất
+        this.addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentShown(ComponentEvent e) {
+                loadData();
+            }
+        });
+
+        // Vẫn load lần đầu khi khởi tạo
         loadData();
     }
 
@@ -225,7 +246,7 @@ public class PNL_ThongKe extends JPanel {
         cbo.setBackground(new Color(40, 40, 40));
         cbo.setForeground(Color.WHITE);
         cbo.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        cbo.setPreferredSize(new Dimension(150, 35));
+        cbo.setPreferredSize(new Dimension(135, 35)); // Chỉnh nhỏ lại 1 chút để vừa thanh công cụ
         return cbo;
     }
 
@@ -249,8 +270,18 @@ public class PNL_ThongKe extends JPanel {
     // --- HÀM NẠP DỮ LIỆU ĐÃ CÓ BỘ LỌC ---
     public void loadData() {
         // Lấy giá trị từ bộ lọc
-        int thang = cboThang.getSelectedIndex(); // 0 là Tất cả, 1->12 là tháng
-        
+    	String ngayStr = cboNgay.getSelectedItem().toString();
+    	int ngay = 0;
+
+    	if (!ngayStr.equals("Tất cả ngày")) {
+    	    ngay = Integer.parseInt(ngayStr.replace("Ngày ", "").trim());
+    	}  // 0 là Tất cả, 1->31 là ngày
+    	String thangStr = cboThang.getSelectedItem().toString();
+    	int thang = 0;
+
+    	if (!thangStr.equals("Tất cả tháng")) {
+    	    thang = Integer.parseInt(thangStr.replace("Tháng ", "").trim());
+    	}        
         String namStr = cboNam.getSelectedItem().toString();
         int nam = namStr.equals("Tất cả năm") ? 0 : Integer.parseInt(namStr);
         
@@ -259,36 +290,39 @@ public class PNL_ThongKe extends JPanel {
 
         NumberFormat nf = NumberFormat.getInstance(new Locale("vi", "VN"));
 
-        // TRUYỀN THAM SỐ VÀO DAO (Bạn phải nâng cấp code bên DAO nhé)
-        double[] tongQuan = thongKeDAO.layThongKeTongQuan(thang, nam, theLoai);
-        lblTongSoVe.setText((int) tongQuan[0] + " Vé");
-        lblTongDoanhThu.setText(nf.format(tongQuan[1]) + " đ");
+        try {
+            double[] tongQuan = thongKeDAO.layThongKeTongQuan(ngay, thang, nam, theLoai);
+            lblTongSoVe.setText((int) tongQuan[0] + " Vé");
+            lblTongDoanhThu.setText(nf.format(tongQuan[1]) + " đ");
 
-        modelXepHang.setRowCount(0);
-        ArrayList<Object[]> listPhim = thongKeDAO.thongKeDoanhThuTheoPhim(thang, nam, theLoai);
-        
-        ArrayList<String> chartLabels = new ArrayList<>();
-        ArrayList<Double> chartValues = new ArrayList<>();
-        
-        int hang = 1;
-        lblPhimTop1.setText("Chưa có dữ liệu"); // Reset mặc định
-        
-        for (Object[] row : listPhim) {
-            String tenPhim = (String) row[0];
-            int soVe = (int) row[1];
-            double tien = (double) row[2];
+            modelXepHang.setRowCount(0);
+            ArrayList<Object[]> listPhim = thongKeDAO.thongKeDoanhThuTheoPhim(ngay, thang, nam, theLoai);
             
-            if (hang == 1) lblPhimTop1.setText(tenPhim);
+            ArrayList<String> chartLabels = new ArrayList<>();
+            ArrayList<Double> chartValues = new ArrayList<>();
+            
+            int hang = 1;
+            lblPhimTop1.setText("Chưa có dữ liệu"); // Reset mặc định
+            
+            for (Object[] row : listPhim) {
+                String tenPhim = (String) row[0];
+                int soVe = (int) row[1];
+                double tien = (double) row[2];
+                
+                if (hang == 1) lblPhimTop1.setText(tenPhim);
 
-            modelXepHang.addRow(new Object[]{"TOP " + hang, tenPhim, soVe, nf.format(tien) + " đ"});
-            
-            if (hang <= 5) { // Lấy Top 5 vẽ biểu đồ
-                chartLabels.add(tenPhim);
-                chartValues.add(tien);
+                modelXepHang.addRow(new Object[]{"TOP " + hang, tenPhim, soVe, nf.format(tien) + " đ"});
+                
+                if (hang <= 5) { // Lấy Top 5 vẽ biểu đồ
+                    chartLabels.add(tenPhim);
+                    chartValues.add(tien);
+                }
+                hang++;
             }
-            hang++;
+            
+            barChart.updateChart(chartLabels, chartValues);
+        } catch (Exception e) {
+            System.err.println("Lỗi khi tải dữ liệu thống kê: " + e.getMessage());
         }
-        
-        barChart.updateChart(chartLabels, chartValues);
     }
 }
