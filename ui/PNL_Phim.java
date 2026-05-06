@@ -4,6 +4,7 @@ import dao.PhimDAO;
 import entity.Phim;
 import java.awt.*;
 import java.awt.event.*;
+import java.io.File;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Locale;
@@ -11,21 +12,27 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import javax.swing.border.TitledBorder;
+import javax.swing.filechooser.FileNameExtensionFilter;
+import javax.swing.plaf.basic.BasicComboBoxUI;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
 public class PNL_Phim extends JPanel implements ActionListener, MouseListener {
-    private JTextField txtMaPhim, txtTenPhim, txtTheLoai, txtGiaVe;
-    private JButton btnThem, btnSua, btnXoa, btnXoaRong;
+    private JTextField txtMaPhim, txtTenPhim, txtGiaVe;
+    private JComboBox<String> cboTheLoai; // THAY ĐỔI: Chuyển thành ComboBox
+    private JButton btnThem, btnSua, btnXoa, btnXoaRong, btnChonAnh;
+    private JLabel lblImagePreview;
     private DefaultTableModel model;
     private JTable table;
     private PhimDAO phimDAO;
+    
+    private String selectedImagePath = "";
 
-    // --- BẢNG MÀU CHỦ ĐỀ ĐỎ (NETFLIX / CGV THEME) ---
-    private Color bgDark = new Color(18, 18, 18);          // Nền chính tối đen
-    private Color bgPanel = new Color(30, 30, 30);         // Nền khung phụ xám đen
-    private Color textWhite = new Color(240, 240, 240);    // Chữ trắng sáng
-    private Color themeRed = new Color(229, 9, 20);        // Đỏ chuẩn Netflix (Điểm nhấn)
+    // --- BẢNG MÀU CHỦ ĐỀ ĐỎ ---
+    private Color bgDark = new Color(18, 18, 18);          
+    private Color bgPanel = new Color(30, 30, 30);         
+    private Color textWhite = new Color(240, 240, 240);    
+    private Color themeRed = new Color(229, 9, 20);        
 
     // --- LỚP NÚT BẤM CAO CẤP ---
     class PosButton extends JButton {
@@ -33,13 +40,13 @@ public class PNL_Phim extends JPanel implements ActionListener, MouseListener {
         public PosButton(String text, Color bg, Color fg) {
             super(text);
             this.bgColor = bg;
+            setBackground(bg);
             setFont(new Font("Segoe UI", Font.BOLD, 14));
             setForeground(fg);
             setFocusPainted(false);
             setContentAreaFilled(false);
             setBorderPainted(false);
             setCursor(new Cursor(Cursor.HAND_CURSOR));
-            setPreferredSize(new Dimension(120, 40));
 
             addMouseListener(new MouseAdapter() {
                 public void mouseEntered(MouseEvent e) { setBackground(bgColor.brighter()); repaint(); }
@@ -50,7 +57,7 @@ public class PNL_Phim extends JPanel implements ActionListener, MouseListener {
         protected void paintComponent(Graphics g) {
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            g2.setColor(getBackground() == null ? bgColor : getBackground());
+            g2.setColor(getBackground());
             g2.fillRoundRect(0, 0, getWidth(), getHeight(), 8, 8);
             g2.dispose();
             super.paintComponent(g);
@@ -60,33 +67,33 @@ public class PNL_Phim extends JPanel implements ActionListener, MouseListener {
     public PNL_Phim() {
         phimDAO = new PhimDAO(); 
         
-        setLayout(new BorderLayout(15, 15));
+        setLayout(new BorderLayout(20, 20)); 
         setBackground(bgDark);
-        setBorder(new EmptyBorder(15, 20, 20, 20));
+        setBorder(new EmptyBorder(20, 25, 20, 25));
 
         // ==========================================
         // 1. FORM NHẬP LIỆU
         // ==========================================
-        JPanel pnlTop = new JPanel(new BorderLayout(0, 15));
+        JPanel pnlTop = new JPanel(new BorderLayout(20, 20));
         pnlTop.setOpaque(false);
 
-        JPanel pnlInput = new JPanel(new GridLayout(2, 4, 20, 20));
-        pnlInput.setBackground(bgPanel);
-        pnlInput.setBorder(new EmptyBorder(15, 20, 15, 20)); 
-
-        // Đổi màu tiêu đề khung sang Đỏ
         TitledBorder border = BorderFactory.createTitledBorder(
-                BorderFactory.createLineBorder(new Color(70, 70, 70)), "THÔNG TIN PHIM",
-                TitledBorder.LEFT, TitledBorder.TOP, new Font("Segoe UI", Font.BOLD, 14), themeRed
+                BorderFactory.createLineBorder(new Color(80, 80, 80), 1, true), "THÔNG TIN PHIM",
+                TitledBorder.LEFT, TitledBorder.TOP, new Font("Segoe UI", Font.BOLD, 15), themeRed
         );
         
-        JPanel pnlInputWrapper = new JPanel(new BorderLayout());
+        JPanel pnlInputWrapper = new JPanel(new BorderLayout(15, 0));
         pnlInputWrapper.setBackground(bgPanel);
-        pnlInputWrapper.setBorder(border);
-        pnlInputWrapper.add(pnlInput, BorderLayout.CENTER);
+        pnlInputWrapper.setBorder(BorderFactory.createCompoundBorder(border, new EmptyBorder(15, 20, 15, 20)));
+
+        // --- BÊN TRÁI: TextFields ---
+        JPanel pnlInput = new JPanel(new GridLayout(2, 4, 25, 25)); 
+        pnlInput.setOpaque(false);
 
         pnlInput.add(createLabel("Mã Phim:"));
         txtMaPhim = createTextField();
+        txtMaPhim.setEditable(false); // KHÓA MÃ PHIM (Tự động nảy số)
+        txtMaPhim.setForeground(new Color(212, 175, 55)); // Đổi màu vàng cho nổi bật
         pnlInput.add(txtMaPhim);
 
         pnlInput.add(createLabel("Tên Phim:"));
@@ -94,26 +101,51 @@ public class PNL_Phim extends JPanel implements ActionListener, MouseListener {
         pnlInput.add(txtTenPhim);
 
         pnlInput.add(createLabel("Thể Loại:"));
-        txtTheLoai = createTextField();
-        pnlInput.add(txtTheLoai);
+        cboTheLoai = createComboBox(); // SỬ DỤNG COMBOBOX
+        pnlInput.add(cboTheLoai);
 
         pnlInput.add(createLabel("Giá Vé (VNĐ):"));
         txtGiaVe = createTextField();
         pnlInput.add(txtGiaVe);
 
+        pnlInputWrapper.add(pnlInput, BorderLayout.CENTER);
+
+        // --- BÊN PHẢI: Upload Ảnh ---
+        JPanel pnlImageContainer = new JPanel(new BorderLayout(0, 10));
+        pnlImageContainer.setOpaque(false);
+        pnlImageContainer.setPreferredSize(new Dimension(140, 180));
+
+        lblImagePreview = new JLabel("CHƯA CÓ ẢNH", SwingConstants.CENTER);
+        lblImagePreview.setForeground(new Color(150, 150, 150));
+        lblImagePreview.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        lblImagePreview.setBorder(new LineBorder(new Color(80, 80, 80), 2, true));
+        lblImagePreview.setPreferredSize(new Dimension(120, 160));
+        
+        btnChonAnh = new PosButton("Chọn Ảnh", new Color(100, 100, 100), Color.WHITE);
+        btnChonAnh.setPreferredSize(new Dimension(120, 35));
+        btnChonAnh.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        btnChonAnh.addActionListener(this); 
+
+        pnlImageContainer.add(lblImagePreview, BorderLayout.CENTER);
+        pnlImageContainer.add(btnChonAnh, BorderLayout.SOUTH);
+
+        pnlInputWrapper.add(pnlImageContainer, BorderLayout.EAST);
         pnlTop.add(pnlInputWrapper, BorderLayout.CENTER);
 
         // ==========================================
         // 2. NÚT CHỨC NĂNG
         // ==========================================
-        JPanel pnlBtns = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 0));
+        JPanel pnlBtns = new JPanel(new FlowLayout(FlowLayout.CENTER, 25, 0));
         pnlBtns.setOpaque(false);
         
-        // Vẫn giữ các màu chức năng quen thuộc để người dùng dễ nhận diện
-        btnThem = new PosButton("THÊM", new Color(46, 204, 113), Color.WHITE);
+        btnThem = new PosButton("THÊM MỚI", new Color(46, 204, 113), Color.WHITE);
+        btnThem.setPreferredSize(new Dimension(130, 42));
         btnSua = new PosButton("CẬP NHẬT", new Color(52, 152, 219), Color.WHITE);
-        btnXoa = new PosButton("XÓA", themeRed, Color.WHITE); // Nút Xóa lấy luôn màu themeRed
+        btnSua.setPreferredSize(new Dimension(130, 42));
+        btnXoa = new PosButton("XÓA PHIM", themeRed, Color.WHITE); 
+        btnXoa.setPreferredSize(new Dimension(130, 42));
         btnXoaRong = new PosButton("LÀM MỚI", new Color(100, 100, 100), Color.WHITE);
+        btnXoaRong.setPreferredSize(new Dimension(130, 42));
 
         pnlBtns.add(btnThem);
         pnlBtns.add(btnSua);
@@ -129,33 +161,33 @@ public class PNL_Phim extends JPanel implements ActionListener, MouseListener {
         JPanel pnlTableWrapper = new JPanel(new BorderLayout());
         pnlTableWrapper.setBackground(bgPanel);
         pnlTableWrapper.setBorder(BorderFactory.createCompoundBorder(
-            new LineBorder(new Color(60, 60, 60), 1),
+            new LineBorder(new Color(60, 60, 60), 1, true), 
             new EmptyBorder(5, 5, 5, 5)
         ));
 
-        String[] cols = {"Mã Phim", "Tên Phim", "Thể Loại", "Giá Vé"};
+        String[] cols = {"Mã Phim", "Tên Phim", "Thể Loại", "Giá Vé", "Đường dẫn Poster"};
         model = new DefaultTableModel(cols, 0) {
             @Override
             public boolean isCellEditable(int row, int column) { return false; }
         };
         table = new JTable(model);
         
-        table.setRowHeight(35);
+        table.setRowHeight(40); 
         table.setBackground(bgPanel); 
         table.setForeground(textWhite);
         table.setFont(new Font("Segoe UI", Font.PLAIN, 15));
-        
-        // Đổi màu nền khi chọn dòng trong bảng thành màu Đỏ Netflix
         table.setSelectionBackground(themeRed); 
         table.setSelectionForeground(Color.WHITE);
         table.setShowGrid(false); 
+        table.setIntercellSpacing(new Dimension(0, 0));
         
-        // Custom Header Bảng chữ Đỏ
         DefaultTableCellRenderer headerRenderer = new DefaultTableCellRenderer();
         headerRenderer.setBackground(new Color(20, 20, 20));
         headerRenderer.setForeground(themeRed); 
-        headerRenderer.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        headerRenderer.setFont(new Font("Segoe UI", Font.BOLD, 15));
         headerRenderer.setHorizontalAlignment(JLabel.CENTER);
+        headerRenderer.setBorder(BorderFactory.createMatteBorder(0, 0, 2, 0, themeRed)); 
+        
         for (int i = 0; i < table.getModel().getColumnCount(); i++) {
             table.getColumnModel().getColumn(i).setHeaderRenderer(headerRenderer);
         }
@@ -178,7 +210,10 @@ public class PNL_Phim extends JPanel implements ActionListener, MouseListener {
         btnXoaRong.addActionListener(this);
         table.addMouseListener(this);
         
+        // Khởi động giao diện: Load combo Thể Loại, Load Bảng, Nảy số Mã Phim
+        loadComboTheLoai();
         loadDataToTable();
+        txtMaPhim.setText(phimDAO.phatSinhMaPhim()); 
     }
 
     // --- CÁC HÀM HỖ TRỢ GIAO DIỆN ---
@@ -191,23 +226,43 @@ public class PNL_Phim extends JPanel implements ActionListener, MouseListener {
 
     private JTextField createTextField() {
         JTextField txt = new JTextField();
-        txt.setFont(new Font("Segoe UI", Font.PLAIN, 15));
-        txt.setBackground(new Color(40, 40, 40)); 
+        txt.setFont(new Font("Segoe UI", Font.BOLD, 15)); 
+        txt.setBackground(new Color(45, 45, 45)); 
         txt.setForeground(Color.WHITE); 
-        // Con trỏ nhấp nháy trong ô nhập văn bản cũng đổi thành màu đỏ
         txt.setCaretColor(themeRed); 
         txt.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(80, 80, 80)), 
-            new EmptyBorder(5, 10, 5, 10) 
+            BorderFactory.createLineBorder(new Color(80, 80, 80), 1, true), 
+            new EmptyBorder(8, 12, 8, 12) 
         ));
         return txt;
+    }
+
+    // TẠO COMBOBOX CHUẨN DARK MODE
+    private JComboBox<String> createComboBox() {
+        JComboBox<String> cbo = new JComboBox<>();
+        cbo.setUI(new BasicComboBoxUI()); 
+        cbo.setFont(new Font("Segoe UI", Font.BOLD, 15));
+        cbo.setBackground(new Color(45, 45, 45)); 
+        cbo.setForeground(Color.WHITE);
+        cbo.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(80, 80, 80), 1, true), 
+            new EmptyBorder(4, 8, 4, 8) 
+        ));
+        // Cho phép nhập tay nếu muốn thêm thể loại mới chưa có trong list
+        cbo.setEditable(true); 
+        cbo.getEditor().getEditorComponent().setBackground(new Color(45, 45, 45));
+        cbo.getEditor().getEditorComponent().setForeground(Color.WHITE);
+        return cbo;
     }
 
     private boolean validateData() {
         String ma = txtMaPhim.getText().trim();
         String ten = txtTenPhim.getText().trim();
-        String theLoai = txtTheLoai.getText().trim();
         String giaStr = txtGiaVe.getText().trim();
+        String theLoai = "";
+        if (cboTheLoai.getSelectedItem() != null) {
+            theLoai = cboTheLoai.getSelectedItem().toString().trim();
+        }
 
         if (ma.isEmpty() || ten.isEmpty() || theLoai.isEmpty() || giaStr.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Vui lòng nhập đầy đủ thông tin phim!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
@@ -226,16 +281,42 @@ public class PNL_Phim extends JPanel implements ActionListener, MouseListener {
         return true;
     }
 
-    // --- HÀM LOAD DỮ LIỆU TỪ SQL ---
+    // --- NẠP DỮ LIỆU ---
+    private void loadComboTheLoai() {
+        cboTheLoai.removeAllItems();
+        ArrayList<String> dsTL = phimDAO.layDanhSachTheLoai();
+        for (String tl : dsTL) {
+            cboTheLoai.addItem(tl);
+        }
+    }
+
     public void loadDataToTable() {
         model.setRowCount(0);
         ArrayList<Phim> ds = phimDAO.docTuBang();
         NumberFormat nf = NumberFormat.getInstance(new Locale("vi", "VN"));
         
         for (Phim p : ds) {
+            String hinhAnh = (p.getHinhAnh() != null) ? p.getHinhAnh() : "";
             model.addRow(new Object[]{
-                p.getMaPhim(), p.getTenPhim(), p.getTheLoai(), nf.format(p.getGiaVe()) + " đ"
+                p.getMaPhim(), p.getTenPhim(), p.getTheLoai(), nf.format(p.getGiaVe()) + " đ", hinhAnh
             });
+        }
+    }
+
+    private void hienThiAnh(String path) {
+        if (path != null && !path.trim().isEmpty()) {
+            try {
+                ImageIcon icon = new ImageIcon(path);
+                Image img = icon.getImage().getScaledInstance(lblImagePreview.getWidth(), lblImagePreview.getHeight(), Image.SCALE_SMOOTH);
+                lblImagePreview.setIcon(new ImageIcon(img));
+                lblImagePreview.setText(""); 
+            } catch (Exception ex) {
+                lblImagePreview.setIcon(null);
+                lblImagePreview.setText("LỖI TẢI ẢNH");
+            }
+        } else {
+            lblImagePreview.setIcon(null);
+            lblImagePreview.setText("CHƯA CÓ ẢNH");
         }
     }
 
@@ -244,28 +325,49 @@ public class PNL_Phim extends JPanel implements ActionListener, MouseListener {
     public void actionPerformed(ActionEvent e) {
         Object o = e.getSource();
 
-        if (o == btnXoaRong) {
-            txtMaPhim.setText(""); txtTenPhim.setText(""); txtTheLoai.setText(""); txtGiaVe.setText("");
-            txtMaPhim.requestFocus();
-            txtMaPhim.setEditable(true);
-            txtMaPhim.setBackground(new Color(40, 40, 40));
+        if (o == btnChonAnh) {
+            JFileChooser fileChooser = new JFileChooser();
+            FileNameExtensionFilter filter = new FileNameExtensionFilter("Hình ảnh (JPG, PNG, GIF)", "jpg", "jpeg", "png", "gif");
+            fileChooser.setFileFilter(filter);
+            
+            int response = fileChooser.showOpenDialog(this);
+            if (response == JFileChooser.APPROVE_OPTION) {
+                File file = fileChooser.getSelectedFile();
+                selectedImagePath = file.getAbsolutePath(); 
+                hienThiAnh(selectedImagePath); 
+            }
+        }
+        else if (o == btnXoaRong) {
+            txtTenPhim.setText(""); txtGiaVe.setText("");
+            if (cboTheLoai.getItemCount() > 0) cboTheLoai.setSelectedIndex(0);
+            
+            // Lấy mã phim mới nhất
+            txtMaPhim.setText(phimDAO.phatSinhMaPhim()); 
+            txtTenPhim.requestFocus();
             table.clearSelection();
+            
+            selectedImagePath = "";
+            hienThiAnh("");
+            
+            // Cập nhật lại list Combo lỡ như vừa thêm thể loại mới
+            loadComboTheLoai();
         } 
         else if (o == btnThem) {
             if (!validateData()) return;
             
             String ma = txtMaPhim.getText().trim();
             String ten = txtTenPhim.getText().trim();
-            String tl = txtTheLoai.getText().trim();
+            String tl = cboTheLoai.getSelectedItem().toString().trim(); // Lấy từ ComboBox
             double gia = Double.parseDouble(txtGiaVe.getText().trim());
 
-            Phim p = new Phim(ma, ten, tl, gia);
+            Phim p = new Phim(ma, ten, tl, gia, selectedImagePath);
+            
             if (phimDAO.themPhim(p)) {
                 loadDataToTable();
                 JOptionPane.showMessageDialog(this, "Thêm phim thành công!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
-                btnXoaRong.doClick();
+                btnXoaRong.doClick(); 
             } else {
-                JOptionPane.showMessageDialog(this, "Mã phim '" + ma + "' đã tồn tại!", "Lỗi trùng mã", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Thêm thất bại (Lỗi CSDL)!", "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
         }
         else if (o == btnXoa) {
@@ -295,10 +397,11 @@ public class PNL_Phim extends JPanel implements ActionListener, MouseListener {
 
             String ma = txtMaPhim.getText().trim();
             String ten = txtTenPhim.getText().trim();
-            String tl = txtTheLoai.getText().trim();
+            String tl = cboTheLoai.getSelectedItem().toString().trim();
             double gia = Double.parseDouble(txtGiaVe.getText().trim());
 
-            Phim p = new Phim(ma, ten, tl, gia);
+            Phim p = new Phim(ma, ten, tl, gia, selectedImagePath);
+            
             if (phimDAO.suaPhim(p)) {
                 loadDataToTable();
                 JOptionPane.showMessageDialog(this, "Cập nhật thành công!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
@@ -315,13 +418,13 @@ public class PNL_Phim extends JPanel implements ActionListener, MouseListener {
         if (row != -1) {
             txtMaPhim.setText(model.getValueAt(row, 0).toString());
             txtTenPhim.setText(model.getValueAt(row, 1).toString());
-            txtTheLoai.setText(model.getValueAt(row, 2).toString());
+            cboTheLoai.setSelectedItem(model.getValueAt(row, 2).toString());
             
             String giaStr = model.getValueAt(row, 3).toString().replaceAll("[. đ]", "");
             txtGiaVe.setText(giaStr);
             
-            txtMaPhim.setEditable(false); 
-            txtMaPhim.setBackground(new Color(60, 60, 60)); 
+            selectedImagePath = model.getValueAt(row, 4).toString();
+            hienThiAnh(selectedImagePath);
         }
     }
     @Override public void mousePressed(MouseEvent e) {}
